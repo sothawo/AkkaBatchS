@@ -1,11 +1,3 @@
-/**
- * $Id: x $
- *
- * Copyright (c) 2014 Jaroso GmbH
- *
- * http://www.jaroso.de
- *
- */
 package com.sothawo.akkabatch.serial;
 
 import java.io.PrintWriter;
@@ -13,7 +5,7 @@ import java.io.PrintWriter;
 /**
  * schreibt in eine Datei.
  *
- * @author P.J.Meisch (pj.meisch@jaroso.de)
+ * @author P.J.Meisch (pj.meisch@sothawo.com)
  */
 public class FileOutputWriter implements OutputWriter {
 // ------------------------------ FIELDS ------------------------------

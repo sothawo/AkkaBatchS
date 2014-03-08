@@ -1,17 +1,9 @@
-/**
- * $Id: x $
- *
- * Copyright (c) 2014 Jaroso GmbH
- *
- * http://www.jaroso.de
- *
- */
-package com.sothawo.akkabatch.serial;
+ package com.sothawo.akkabatch.serial;
 
 /**
  * Schreibt die Daten in die Ausgabedatei.
  *
- * @author P.J.Meisch (pj.meisch@jaroso.de)
+ * @author P.J.Meisch (pj.meisch@sothawo.com)
  */
 public interface OutputWriter {
     /** öffnet die Ausgabedatei */

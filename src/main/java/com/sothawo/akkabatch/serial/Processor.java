@@ -1,18 +1,10 @@
-/**
- * $Id: x $
- *
- * Copyright (c) 2014 Jaroso GmbH
- *
- * http://www.jaroso.de
- *
- */
 package com.sothawo.akkabatch.serial;
 
 /**
  * Ein Processor nimmt die Daten zur Verarbeitung entgegen, verarbeitet sie und gibt die verarbeiteten Daten an einen
  * OutputWriter in der richtigen Reihenfolge wieder aus.
  *
- * @author P.J.Meisch (pj.meisch@jaroso.de)
+ * @author P.J.Meisch (pj.meisch@sothawo.com)
  */
 public abstract class Processor {
 // ------------------------------ FIELDS ------------------------------
