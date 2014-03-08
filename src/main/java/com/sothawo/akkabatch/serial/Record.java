@@ -1,17 +1,7 @@
-/**
- * $Id: x $
- *
- * Copyright (c) 2014 Jaroso GmbH
- *
- * http://www.jaroso.de
- *
- */
 package com.sothawo.akkabatch.serial;
 
 /**
  * Datensatz.
- *
- * @author P.J.Meisch (pj.meisch@jaroso.de)
  */
 public class Record {
 // ------------------------------ FIELDS ------------------------------
@@ -110,11 +100,11 @@ public class Record {
     }
 
     public static Record fromLine(String line) {
-        if(null == line) {
+        if (null == line) {
             throw new IllegalArgumentException("Record from null");
         }
         String[] fields = line.split("~", -1);
-        if(fields.length != 10) {
+        if (fields.length != 10) {
             throw new IllegalArgumentException("ungültige Daten: " + line);
         }
         Record record = new Record();
@@ -127,7 +117,7 @@ public class Record {
         record.setCity(fields[5]);
         record.setDistrict(fields[6]);
         record.setStreet(fields[7]);
-        record.setNumber(fields[8]+ fields[9]);
+        record.setNumber(fields[8] + fields[9]);
         return record;
     }
 }
