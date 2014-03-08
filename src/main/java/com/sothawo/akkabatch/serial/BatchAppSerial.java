@@ -11,7 +11,7 @@ import java.text.MessageFormat;
  *
  * @author P.J.Meisch (pj.meisch@sothawo.com)
  */
-public class BatchApp {
+public class BatchAppSerial {
 // ------------------------------ FIELDS ------------------------------
 
     /** Name der Eingabedatei */
@@ -25,7 +25,7 @@ public class BatchApp {
      * @param args
      *         Programmargumente.
      */
-    public BatchApp(String[] args) {
+    public BatchAppSerial(String[] args) {
         if (null == args || args.length < 2) {
             throw new IllegalArgumentException("falsche Anzahl Parameter");
         }
@@ -43,7 +43,7 @@ public class BatchApp {
      */
     public static void main(String[] args) {
         try {
-            new BatchApp(args).run();
+            new BatchAppSerial(args).run();
         } catch (Exception e) {
             e.printStackTrace();
         }
