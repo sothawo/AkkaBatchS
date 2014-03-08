@@ -3,6 +3,7 @@ package com.sothawo.akkabatch.serial;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.text.MessageFormat;
 
 /**
@@ -17,10 +18,6 @@ public class BatchApp {
     private final String infileName;
     /** Name der Ausgabedatei */
     private final String outfileName;
-    /** Flag ob Verarbeitung mit akka */
-    private boolean useAkka = false;
-    /** Anzahl Akka-Worker */
-    private Integer numWorker = 0;
 
 // --------------------------- CONSTRUCTORS ---------------------------
 
@@ -29,20 +26,11 @@ public class BatchApp {
      *         Programmargumente.
      */
     public BatchApp(String[] args) {
-        if (null == args || args.length < 3) {
+        if (null == args || args.length < 2) {
             throw new IllegalArgumentException("falsche Anzahl Parameter");
         }
         infileName = args[0];
         outfileName = args[1];
-        if ("akka".equals(args[2])) {
-            useAkka = true;
-        }
-        if (useAkka) {
-            if (args.length < 4) {
-                throw new IllegalArgumentException("falsche Anzahl Parameter");
-            }
-            numWorker = Integer.getInteger(args[3]);
-        }
     }
 
 // --------------------------- main() method ---------------------------
@@ -70,14 +58,8 @@ public class BatchApp {
                 new InputStreamReader(new FileInputStream(infileName), "iso-8859-1"));
 
         // Ausgabe
-        OutputWriter writer = new FileOutputWriter();
-        writer.open(outfileName);
+        PrintWriter writer = new PrintWriter(outfileName, "iso-8859-1");
 
-        // Processor    
-        Processor processor = useAkka ? null : new SerialProcessor(writer);
-        if (null == processor) {
-            throw new IllegalArgumentException("kein Processor vorhanden");
-        }
 
         // sonstige Initialisierung
         long numRecords = 0;
@@ -87,7 +69,9 @@ public class BatchApp {
         String line = reader.readLine();
         while (null != line) {
             numRecords++;
-            processor.process(line);
+            Record record = Record.fromLine(line);
+            // TODO: Verarbeiten
+            writer.write(record.getOriginal());
             line = reader.readLine();
         }
 

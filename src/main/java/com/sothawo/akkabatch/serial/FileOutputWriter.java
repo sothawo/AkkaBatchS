@@ -7,23 +7,14 @@ import java.io.PrintWriter;
  *
  * @author P.J.Meisch (pj.meisch@sothawo.com)
  */
-public class FileOutputWriter implements OutputWriter {
+public class FileOutputWriter {
 // ------------------------------ FIELDS ------------------------------
 
     /** zum Schreiben */
     private PrintWriter writer;
 
-// ------------------------ INTERFACE METHODS ------------------------
+// -------------------------- OTHER METHODS --------------------------
 
-
-// --------------------- Interface OutputWriter ---------------------
-
-    @Override
-    public void open(String filename) throws Exception {
-        writer = new PrintWriter(filename, "iso-8859-1");
-    }
-
-    @Override
     public void close() {
         if (null != writer) {
             writer.flush();
@@ -31,7 +22,10 @@ public class FileOutputWriter implements OutputWriter {
         }
     }
 
-    @Override
+    public void open(String filename) throws Exception {
+        writer = new PrintWriter(filename, "iso-8859-1");
+    }
+
     public void write(String line) {
         writer.println(line);
     }
