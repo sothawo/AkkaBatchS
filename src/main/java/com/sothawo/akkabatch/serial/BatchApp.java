@@ -71,7 +71,7 @@ public class BatchApp {
             numRecords++;
             Record record = Record.fromLine(line);
             // TODO: Verarbeiten
-            writer.write(record.getOriginal());
+            writer.println(record.getOriginal());
             line = reader.readLine();
         }
 
