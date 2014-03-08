@@ -6,9 +6,8 @@
  * http://www.jaroso.de
  *
  */
-package de.jaroso.test.batchakka;
+package com.sothawo.akkabatch.serial;
 
-import java.io.FileOutputStream;
 import java.io.PrintWriter;
 
 /**

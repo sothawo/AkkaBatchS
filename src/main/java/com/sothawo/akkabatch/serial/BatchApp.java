@@ -6,7 +6,7 @@
  * http://www.jaroso.de
  *
  */
-package de.jaroso.test.batchakka;
+package com.sothawo.akkabatch.serial;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;

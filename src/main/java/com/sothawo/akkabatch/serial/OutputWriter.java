@@ -6,7 +6,7 @@
  * http://www.jaroso.de
  *
  */
-package de.jaroso.test.batchakka;
+package com.sothawo.akkabatch.serial;
 
 /**
  * Schreibt die Daten in die Ausgabedatei.

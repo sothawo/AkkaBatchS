@@ -6,7 +6,7 @@
  * http://www.jaroso.de
  *
  */
-package de.jaroso.test.batchakka;
+package com.sothawo.akkabatch.serial;
 
 /**
  * Ein Processor nimmt die Daten zur Verarbeitung entgegen, verarbeitet sie und gibt die verarbeiteten Daten an einen
