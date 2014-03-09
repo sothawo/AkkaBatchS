@@ -19,4 +19,26 @@ wird gemessen. Zum Vergleich mit einer nicht parallelisierten Version gibt es ei
  - Beim Schreiben eines Datensatzes wird der Originalstring verwendet, damit hinterher mit dem diff-Befehl geprüft
  werden kann, ob die Dateien gleich sind
 
+# die verwendeten Aktoren
+
+Im folgenden werden die beteiligten Aktoren und die zwischen ihnen ausgetauschten Nachrichten beschrieben
+
+## Reader
+
+## Writer
+
+## CSV2Record
+Der Aktor ist dafür zuständig, aus einer Zeile im CSV Format einen Datensatz zu erzeugen.
+
+### ausgehende Nachrichten
+- ProcessRecord (enthält die Record-ID, die Originalzeile und den Datensatz)
+
+## RecordModifier
+Der Aktor führt die eigentliche Verarbeitung durch.
+
+### eingehende Nachrichten
+- ProcessRecord
+### ausgehende Nachrichten
+- ProcessRecord (der enthaltene Datensatz ist bearbeitet, die Nachricht ist **nicht** die eingelieferte!),
+wird an den Writer gesendet. Der Name des Writer wird über die Konfiguration ermittelt.
 
