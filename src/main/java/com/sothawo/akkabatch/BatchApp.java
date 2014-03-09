@@ -2,6 +2,8 @@ package com.sothawo.akkabatch;
 
 import akka.actor.ActorSystem;
 import akka.actor.Inbox;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import scala.concurrent.duration.Duration;
 
 import java.text.MessageFormat;
@@ -18,8 +20,12 @@ public class BatchApp {
      */
     public static void main(String[] args) {
         try {
+            // Konfiguration laden, das macht theoretisch ActorSystem auch, aber so verwenden wir die gleiche Konfiguration
+            Config configAll = ConfigFactory.load();
+            Config configApp = configAll.getConfig("com.sothawo.akkabatch");
+
             // Aktorensystem anlegen
-            ActorSystem system = ActorSystem.create("AkkaBatch");
+            ActorSystem system = ActorSystem.create("AkkaBatch", configAll);
 
             // Inbox mit der auf die Shutdown Message gewartet wird
             Inbox inbox = Inbox.create(system);
@@ -30,7 +36,8 @@ public class BatchApp {
 
             // an die eigene Inbox eine Message in 15 Sekunden
             system.scheduler()
-                  .scheduleOnce(Duration.create(15, TimeUnit.SECONDS), inbox.getRef(), new String("shutdown"),
+                  .scheduleOnce(Duration.create(configApp.getLong("run.duration"), TimeUnit.SECONDS), inbox.getRef(),
+                                new String("shutdown"),
                                 system.dispatcher(), inbox.getRef());
             // jede Message an die Inbox fährt das System herunter, spätestens nach 24 Stunden
             Object msg = inbox.receive(Duration.create(24, TimeUnit.HOURS));
