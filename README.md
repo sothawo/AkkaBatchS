@@ -27,15 +27,32 @@ welche gerade frei sind.
 
 ## Reader
 
-***TODO***
+Der Reader ist die Steuerungszentrale des Verarbeitungsprozesses. Bei ihm registrieren sich die CSV2Record Aktoren,
+er bekommt den Auftrag zur Verarbeitung einer Datei. Der Reader liest die Daten satzweise ein,
+so dass immer nur eine maximal definierte Anzahl von Recods im System ist. Dadurch wird verhindert,
+dass zum einen das System mit Daten überflutet wird, und zum anderen, das der Writer zu viele Daten puffern muss,
+wenn ein Datensatz zu lange in der Verarbeitung  bleibt.
 
 ### eingehende Nachrichten
 
-***TODO***
+- Register wird von einem CSV2Record gesendet um sich zu registrieren
+- InitReader enthält den Namen der zu verarbeitenden Datei nd wird zum Beginn der Verarbeitung von Inbox gesendet.
+- GetWork wird von einem CSV2Record gesendet, wenn dieser einen Datensatz verarbeiten kann.
+- RecordReceived, enthält eine Record-ID und wird vom Writer gesendet, wenn dieser den entsprechenden Datensatz
+erhalten hat. Der Reader entfernt diesen aus seiner internen List mit evtl. noch einmal zu sendenden Daten.
+- RecordsWritten wird vom Writer gesendet, wenn dieser Ausgabedatensätze geschrieben hat. Anhand der übermittelten
+Anzahl kann der Reader entsprechend neue Daten einlesen und in die Verarbeitung schicken und auch feststellen,
+ob alle Daten verarbeitet wurden.
+- SendAgain wird über einen Scheduler regelmässig gesendet und dient dazu, das erneute Verarbeiten von Datensätzen,
+die nicht in der vorgegebenen Zeit beim Writer angekommen sind, anzustossen.
 
 ### ausgehende Nachrichten
 
-***TODO***
+- WorkAvailable wird an alle registrierten CSV2Record Aktoren gesendet, wenn neue Daten eingelesen oder aber schon
+einmal versendete Daten nicht nnerhalb einer konfigurierten Zeit beim Writer angekommen sind.
+- DoWork, enthält Record-Id und CSV Zeile, wird an einen CVS2Record Aktor gesendet,
+wenn dieser die Nachricht GetWork an den Reader gesendet hat und es Daten zur Verarbeitung gibt.
+- WorkDone wird an Inbox gesendet, wenn alle Daten verarbeitet wurden
 
 ## Writer
 
