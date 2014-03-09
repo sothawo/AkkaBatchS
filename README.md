@@ -25,6 +25,8 @@ Im folgenden werden die beteiligten Aktoren und die zwischen ihnen ausgetauschte
 ein Pull-Konzept verwendet, das dafür sorgt, dass die anstehende Arbeit auf die Worker verteilt wird,
 welche gerade frei sind.
 
+![Aktoren-Grafik](https://bitbucket.org/sothawo/akkabatch/downloads/AkkaBatch.svg)
+
 ## Reader
 
 Der Reader ist die Steuerungszentrale des Verarbeitungsprozesses. Bei ihm registrieren sich die CSV2Record Aktoren,
