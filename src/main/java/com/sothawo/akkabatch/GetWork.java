@@ -7,7 +7,7 @@ import java.io.Serializable;
  *
  * @author P.J. Meisch (pj.meisch@sothawo.com).
  */
-public class GetWork implements Serializable {
+public final class GetWork implements Serializable {
     // ------------------------------ FIELDS ------------------------------
     public static final long serialVersionUID = 42L;
 }

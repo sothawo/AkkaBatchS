@@ -7,7 +7,7 @@ import java.io.Serializable;
  *
  * @author P.J. Meisch (pj.meisch@sothawo.com).
  */
-public class Register implements Serializable {
+public final class Register implements Serializable {
     // ------------------------------ FIELDS ------------------------------
     public static final long serialVersionUID = 42L;
 }
