@@ -38,7 +38,7 @@ wenn ein Datensatz zu lange in der Verarbeitung  bleibt.
 ### eingehende Nachrichten
 
 - Register wird von einem CSV2Record gesendet um sich zu registrieren
-- InitReader enthält den Namen der zu verarbeitenden Datei nd wird zum Beginn der Verarbeitung von Inbox gesendet.
+- InitReader enthält den Namen der zu verarbeitenden Datei und wird zum Beginn der Verarbeitung von Inbox gesendet.
 - GetWork wird von einem CSV2Record gesendet, wenn dieser einen Datensatz verarbeiten kann.
 - RecordReceived, enthält eine Record-ID und wird vom Writer gesendet, wenn dieser den entsprechenden Datensatz
 erhalten hat. Der Reader entfernt diesen aus seiner internen List mit evtl. noch einmal zu sendenden Daten.
