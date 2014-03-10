@@ -21,27 +21,45 @@ import java.util.concurrent.TimeUnit;
 public class BatchApp {
 // ------------------------------ FIELDS ------------------------------
 
-    /**
-     * Logger
-     */
+    /** Logger */
     protected LoggingAdapter log;
-    /**
-     * Konfiguration der Applikation
-     */
+    /** Name der Eingabedatei */
+    private final String infileName;
+    /** Name der Ausgabedatei */
+    private final String outfileName;
+    /** Konfiguration der Applikation */
     private Config configApp;
-    /**
-     * das Inbox Objekt des Akka Systems
-     */
+    /** das Aktorensystem */
+    private ActorSystem system;
+    /** das Inbox Objekt des Akka Systems */
     private Inbox inbox;
+    /** der Writer */
+    // TODO: wird der wirklich als field benötigt?
+    private ActorRef writer;
+
+// --------------------------- CONSTRUCTORS ---------------------------
+
+    /**
+     * @param args
+     *         Programmargumente
+     */
+    public BatchApp(String[] args) {
+        if (null == args || args.length < 2) {
+            throw new IllegalArgumentException("falsche Anzahl Parameter");
+        }
+        infileName = args[0];
+        outfileName = args[1];
+    }
 
 // --------------------------- main() method ---------------------------
 
     /**
-     * @param args Programmargumente
+     * @param args
+     *         Programmargumente
      */
     public static void main(String[] args) {
         try {
-            new BatchApp().run();
+            new BatchApp(args).run();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -50,21 +68,13 @@ public class BatchApp {
     /**
      * Programm als Methode der BatchApp-Klasse.
      */
-    private void run() {
+    private void run() throws AkkaBatchException {
         // Konfiguration laden, das macht theoretisch ActorSystem auch, aber so verwenden wir die gleiche Konfiguration
         Config configAll = ConfigFactory.load();
         configApp = configAll.getConfig("com.sothawo.akkabatch");
 
-        // Aktorensystem anlegen
-        ActorSystem system = ActorSystem.create(configApp.getString("akka.system.name"), configAll);
-        log = Logging.getLogger(system, this);
-        inbox = Inbox.create(system);
-
-        String csv = "460332901~1~WOLFGANG~STEINBERG~76133~KARLSRUHE~INNENSTADT-OST~ADLERSTR.~10~";
-        ProcessRecord processRecord = new ProcessRecord(4711L, csv, Record.fromLine(csv));
-
-        ActorRef writer = system.actorOf(Props.create(Writer.class), configApp.getString("writer.name"));
-        inbox.send(writer, processRecord);
+        initAkka(configAll);
+        initWriter();
 
         long startTime = System.currentTimeMillis();
 
@@ -75,7 +85,11 @@ public class BatchApp {
 //                            system.dispatcher(), inbox.getRef());
         // jede Message an die Inbox fährt das System herunter, spätestens nach 24 Stunden
 
+
         // TODO: Dummy, der Writer schickt WorkDone
+        String csv = "460332901~1~WOLFGANG~STEINBERG~76133~KARLSRUHE~INNENSTADT-OST~ADLERSTR.~10~";
+        ProcessRecord processRecord = new ProcessRecord(4711L, csv, Record.fromLine(csv));
+        inbox.send(writer, processRecord);
         Object msg = inbox.receive(Duration.create(24, TimeUnit.HOURS));
         if (msg instanceof WorkDone) {
             log.info("work done");
@@ -86,5 +100,28 @@ public class BatchApp {
         long endTime = System.currentTimeMillis();
         System.out.println(MessageFormat.format("Dauer: {0} ms, {1} Sätze", endTime - startTime, 0));
         system.shutdown();
+    }
+
+    /**
+     * Initialisiert den Writer.
+     */
+    private void initWriter() throws AkkaBatchException {
+        writer = system.actorOf(Props.create(Writer.class), configApp.getString("writer.name"));
+        inbox.send(writer, new InitWriter(outfileName, configApp.getString("charset.outfile")));
+        Object msg = inbox.receive(Duration.create(5, TimeUnit.SECONDS));
+        if (msg instanceof InitResult) {
+            InitResult initResult = (InitResult) msg;
+            if (!initResult.getSuccess()) {
+                throw new AkkaBatchException("Fehler bei der Initialisierung des Writer");
+            }
+        } else {
+            throw new AkkaBatchException("unbekannte Antwort");
+        }
+    }
+
+    private void initAkka(Config configAll) {
+        system = ActorSystem.create(configApp.getString("akka.system.name"), configAll);
+        log = Logging.getLogger(system, this);
+        inbox = Inbox.create(system);
     }
 }

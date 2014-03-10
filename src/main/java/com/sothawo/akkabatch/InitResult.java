@@ -7,7 +7,17 @@ import java.io.Serializable;
  *
  * @author P.J. Meisch (pj.meisch@sothawo.com).
  */
-public final class InitReady implements Serializable {
+public final class InitResult implements Serializable {
     // ------------------------------ FIELDS ------------------------------
     public static final long serialVersionUID = 42L;
+    /** Erfolgsflag */
+    private Boolean success;
+
+    public InitResult(Boolean success) {
+        this.success = success;
+    }
+
+    public Boolean getSuccess() {
+        return success;
+    }
 }

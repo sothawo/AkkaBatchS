@@ -75,7 +75,7 @@ internen Datenstrukturen zurück.
 ### ausgehende Nachrichten
 
 - InitReady wird an Inbox gesendet wenn ein InitWriter empfangen wurde und die internen Strukturen initialisiert
-wurden
+wurden, enthält ein Flag, ob die Initialisierung erfolgreich war.
 - RecordReceived, enthält eine Record-ID und wird an den Reader gesendet, wenn ein ProcessRecord empfangen wurde,
 damit der Reader den entsprechenden Record nicht noch einmal in die Verarbeitung schickt.
 - RecordsWritten wird an den Reader gesendet, wenn Datensätze in die Ausgabe geschrieben wurden. Die Nachricht
