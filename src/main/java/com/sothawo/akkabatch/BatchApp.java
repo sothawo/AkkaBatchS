@@ -6,6 +6,7 @@ import akka.actor.Inbox;
 import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import akka.routing.FromConfig;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import scala.concurrent.duration.Duration;
@@ -58,48 +59,78 @@ public class BatchApp {
      *         Programmargumente
      */
     public static void main(String[] args) {
-        try {
-            new BatchApp(args).run();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        new BatchApp(args).run();
     }
 
     /**
-     * Programm als Methode der BatchApp-Klasse.
+     * Programmausführung als Methode der BatchApp-Klasse.
      */
-    private void run() throws AkkaBatchException {
-        // Konfiguration laden, das macht theoretisch ActorSystem auch, aber so verwenden wir die gleiche Konfiguration
-        Config configAll = ConfigFactory.load();
-        configApp = configAll.getConfig("com.sothawo.akkabatch");
+    private void run() {
+        try {
+            // Konfiguration laden, das macht theoretisch ActorSystem auch, aber so verwenden wir die gleiche
+            // Konfiguration
+            Config configAll = ConfigFactory.load();
+            configApp = configAll.getConfig("com.sothawo.akkabatch");
 
-        initAkka(configAll);
-        initWriter();
+            initAkka(configAll);
+            initWriter();
 
-        long startTime = System.currentTimeMillis();
+            initWorkers();
 
-        // an die eigene Inbox eine Message in 15 Sekunden
+            long startTime = System.currentTimeMillis();
+
+            // an die eigene Inbox eine Message in 15 Sekunden
 //        system.scheduler()
 //              .scheduleOnce(Duration.create(configApp.getLong("run.duration"), TimeUnit.SECONDS), inbox.getRef(),
 //                            new String("shutdown"),
 //                            system.dispatcher(), inbox.getRef());
-        // jede Message an die Inbox fährt das System herunter, spätestens nach 24 Stunden
+            // jede Message an die Inbox fährt das System herunter, spätestens nach 24 Stunden
 
 
-        // TODO: Dummy, der Writer schickt WorkDone
+            // TODO: Dummy, der Writer schickt WorkDone
+            String csv = "460332901~1~WOLFGANG~STEINBERG~76133~KARLSRUHE~INNENSTADT-OST~ADLERSTR.~10~";
+            ProcessRecord processRecord = new ProcessRecord(4711L, csv, Record.fromLine(csv));
+//        inbox.send(writer, processRecord);
+            Object msg = inbox.receive(Duration.create(configApp.getLong("run.duration"), TimeUnit.SECONDS));
+            if (msg instanceof WorkDone) {
+                log.info("work done");
+            } else {
+                log.error("unbekannte Nachricht: " + msg.getClass().getCanonicalName());
+            }
+
+            //Auswertung
+            long endTime = System.currentTimeMillis();
+            System.out.println(MessageFormat.format("Dauer: {0} ms, {1} Sätze", endTime - startTime, 0));
+        } catch (AkkaBatchException e) {
+            e.printStackTrace();
+        } finally {
+            if (null != system) {
+                system.shutdown();
+            }
+        }
+    }
+
+    /**
+     * Initialisiert die Worker.
+     */
+    private void initWorkers() {
+        ActorRef recordModifier = system.actorOf(FromConfig.getInstance().props(Props.create(RecordModifier.class)),
+                                                 "RecordModifier");
         String csv = "460332901~1~WOLFGANG~STEINBERG~76133~KARLSRUHE~INNENSTADT-OST~ADLERSTR.~10~";
         ProcessRecord processRecord = new ProcessRecord(4711L, csv, Record.fromLine(csv));
-        inbox.send(writer, processRecord);
-        Object msg = inbox.receive(Duration.create(24, TimeUnit.HOURS));
-        if (msg instanceof WorkDone) {
-            log.info("work done");
-        } else {
-            log.error("unbekannte Nachricht: " + msg.getClass().getCanonicalName());
-        }
-        //Auswertung
-        long endTime = System.currentTimeMillis();
-        System.out.println(MessageFormat.format("Dauer: {0} ms, {1} Sätze", endTime - startTime, 0));
-        system.shutdown();
+        inbox.send(recordModifier, processRecord);
+    }
+
+    /**
+     * Initialisiert das Akka System.
+     *
+     * @param config
+     *         KOnfigurationsobjekt.
+     */
+    private void initAkka(Config config) {
+        system = ActorSystem.create(configApp.getString("akka.system.name"), config);
+        log = Logging.getLogger(system, this);
+        inbox = Inbox.create(system);
     }
 
     /**
@@ -117,11 +148,5 @@ public class BatchApp {
         } else {
             throw new AkkaBatchException("unbekannte Antwort");
         }
-    }
-
-    private void initAkka(Config configAll) {
-        system = ActorSystem.create(configApp.getString("akka.system.name"), configAll);
-        log = Logging.getLogger(system, this);
-        inbox = Inbox.create(system);
     }
 }
