@@ -72,8 +72,8 @@ public class BatchAppSerial {
         String line = reader.readLine();
         while (null != line) {
             numRecords++;
-            ProcessRecord processRecord = new ProcessRecord(numRecords, line, Record.fromLine(line));
-            // TODO: Verarbeiten
+            ProcessRecord processRecord = new ProcessRecord(numRecords, line,
+                                                            Record.processRecord(Record.fromLine(line)));
             writer.println(processRecord.getCsvOriginal());
             line = reader.readLine();
         }

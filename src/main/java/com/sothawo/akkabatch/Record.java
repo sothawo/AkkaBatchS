@@ -1,5 +1,7 @@
 package com.sothawo.akkabatch;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * Datensatz.
  */
@@ -36,6 +38,23 @@ public final class Record {
         record.district = fields[6];
         record.street = fields[7];
         record.number = fields[8] + fields[9];
+        return record;
+    }
+
+    public static Record processRecord(final Record origin) {
+        if (null == origin) {
+            throw new IllegalArgumentException("null input");
+        }
+        Record record = new Record();
+        record.id = origin.id;
+        record.sex = origin.sex;
+        record.firstname = StringUtils.upperCase(origin.firstname);
+        record.lastname = StringUtils.upperCase(origin.lastname);
+        record.zip = origin.zip;
+        record.city = StringUtils.upperCase(origin.city);
+        record.district = StringUtils.upperCase(origin.district);
+        record.street = StringUtils.upperCase(origin.street);
+        record.number = StringUtils.upperCase(origin.number);
         return record;
     }
 
