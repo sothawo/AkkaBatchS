@@ -66,6 +66,6 @@ public class Writer extends UntypedActor {
     private void processRecord(ProcessRecord processRecord) {
         log.info("Datensatz Nr. " + processRecord.getRecordId());
         // TODO: Dummycode
-        sender().tell(new WorkDone(), getSelf());
+        sender().tell(new WorkDone(true), getSelf());
     }
 }

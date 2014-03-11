@@ -38,7 +38,7 @@ wenn ein Datensatz zu lange in der Verarbeitung bleibt.
 ### eingehende Nachrichten
 
 - Register wird von einem CSV2Record gesendet um sich zu registrieren
-- InitReader enthält den Namen der zu verarbeitenden Datei nd wird zum Beginn der Verarbeitung von Inbox gesendet.
+- InitReader enthält den Namen der zu verarbeitenden Datei und wird zum Beginn der Verarbeitung von Inbox gesendet.
 - GetWork wird von einem CSV2Record gesendet, wenn dieser einen Datensatz verarbeiten kann.
 - RecordReceived, enthält eine Record-ID und wird vom Writer gesendet, wenn dieser den entsprechenden Datensatz
 erhalten hat. Der Reader entfernt diesen aus seiner internen List mit evtl. noch einmal zu sendenden Daten.
@@ -54,7 +54,8 @@ die nicht in der vorgegebenen Zeit beim Writer angekommen sind, anzustossen.
 einmal versendete Daten nicht nnerhalb einer konfigurierten Zeit beim Writer angekommen sind.
 - DoWork, enthält Record-Id und CSV Zeile, wird an einen CVS2Record Aktor gesendet,
 wenn dieser die Nachricht GetWork an den Reader gesendet hat und es Daten zur Verarbeitung gibt.
-- WorkDone wird an Inbox gesendet, wenn alle Daten verarbeitet wurden
+- WorkDone wird an Inbox gesendet, wenn alle Daten verarbeitet wurden oder wenn eine Fehler aufgetreten ist. Die
+Nachricht enthält ein entsprechendes Flag.
 
 ## Writer
 

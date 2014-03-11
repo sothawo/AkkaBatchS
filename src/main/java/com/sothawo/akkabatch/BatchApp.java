@@ -7,9 +7,7 @@ import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.routing.FromConfig;
-import com.sothawo.akkabatch.messages.InitResult;
-import com.sothawo.akkabatch.messages.InitWriter;
-import com.sothawo.akkabatch.messages.SendAgain;
+import com.sothawo.akkabatch.messages.*;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import scala.concurrent.duration.Duration;
@@ -83,24 +81,20 @@ public class BatchApp {
             initWriter();
             initWorkers();
 
-
+            // Verarbeitung durch Nachricht an den Reader starten
             long startTime = System.currentTimeMillis();
-
-            // an die eigene Inbox eine Message in 15 Sekunden
-//        system.scheduler()
-//              .scheduleOnce(Duration.create(configApp.getLong("run.duration"), TimeUnit.SECONDS), inbox.getRef(),
-//                            new String("shutdown"),
-//                            system.dispatcher(), inbox.getRef());
-            // jede Message an die Inbox fährt das System herunter, spätestens nach 24 Stunden
-
-
-            // TODO: rausnehmen, wenn System läuft.
-            // auf - nicht kommende Nachricht warten, dann Programmende
-            Object msg = inbox.receive(Duration.create(configApp.getLong("run.duration"), TimeUnit.SECONDS));
-
-            //Auswertung
+            inbox.send(reader, new InitReader(infileName, configApp.getString("charset.infile")));
+            Object msg = inbox.receive(Duration.create(configApp.getLong("maxRunDuration"), TimeUnit.SECONDS));
             long endTime = System.currentTimeMillis();
-            System.out.println(MessageFormat.format("Dauer: {0} ms, {1} Sätze", endTime - startTime, 0));
+            if (msg instanceof WorkDone) {
+                System.out.println(
+                        MessageFormat.format("Verarbeitung {0}, Dauer: {0} ms",
+                                             ((WorkDone) msg).getSuccess() ? "OK" : "Fehler",
+                                             endTime - startTime));
+            } else {
+                throw new AkkaBatchException(
+                        MessageFormat.format("unerwartete Nachricht: {0}", msg.getClass().getCanonicalName()));
+            }
         } catch (AkkaBatchException e) {
             e.printStackTrace();
         } finally {
@@ -108,15 +102,6 @@ public class BatchApp {
                 system.shutdown();
             }
         }
-    }
-
-    /**
-     * Initialisiert die Worker.
-     */
-    private void initWorkers() {
-        system.actorOf(FromConfig.getInstance().props(Props.create(RecordModifier.class)),
-                       configApp.getString("recordModifier.name"));
-        system.actorOf(FromConfig.getInstance().props(Props.create(CSV2Record.class)), "CSV2Record");
     }
 
     /**
@@ -141,6 +126,16 @@ public class BatchApp {
         FiniteDuration intervalResend = Duration.create(configApp.getLong("intervall.resend"), TimeUnit.SECONDS);
         system.scheduler().schedule(intervalResend, intervalResend, reader, resend, system.dispatcher(),
                                     inbox.getRef());
+    }
+
+    /**
+     * Initialisiert die Worker.
+     */
+    private void initWorkers() {
+        system.actorOf(FromConfig.getInstance().props(Props.create(RecordModifier.class)),
+                       configApp.getString("recordModifier.name"));
+        system.actorOf(FromConfig.getInstance().props(Props.create(CSV2Record.class)),
+                       configApp.getString("csv2Record.name"));
     }
 
     /**
