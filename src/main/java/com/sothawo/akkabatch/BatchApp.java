@@ -88,7 +88,7 @@ public class BatchApp {
             long endTime = System.currentTimeMillis();
             if (msg instanceof WorkDone) {
                 System.out.println(
-                        MessageFormat.format("Verarbeitung {0}, Dauer: {0} ms",
+                        MessageFormat.format("Verarbeitung {0}, Dauer: {1} ms",
                                              ((WorkDone) msg).getSuccess() ? "OK" : "Fehler",
                                              endTime - startTime));
             } else {
