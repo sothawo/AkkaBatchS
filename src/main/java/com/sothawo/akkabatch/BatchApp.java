@@ -84,6 +84,7 @@ public class BatchApp {
             // Verarbeitung durch Nachricht an den Reader starten
             long startTime = System.currentTimeMillis();
             inbox.send(reader, new InitReader(infileName, configApp.getString("charset.infile")));
+            // auf WorkDone warten
             Object msg = inbox.receive(Duration.create(configApp.getLong("maxRunDuration"), TimeUnit.SECONDS));
             long endTime = System.currentTimeMillis();
             if (msg instanceof WorkDone) {
