@@ -9,7 +9,6 @@ import akka.event.LoggingAdapter;
 import akka.routing.FromConfig;
 import com.sothawo.akkabatch.messages.InitResult;
 import com.sothawo.akkabatch.messages.InitWriter;
-import com.sothawo.akkabatch.messages.ProcessRecord;
 import com.sothawo.akkabatch.messages.SendAgain;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -113,16 +112,11 @@ public class BatchApp {
 
     /**
      * Initialisiert die Worker.
-     * TODO: muss das hier gemacht werden? Oder macht das nicht das System, wenn die benötigt werden?
      */
     private void initWorkers() {
-        ActorRef recordModifier = system.actorOf(FromConfig.getInstance().props(Props.create(RecordModifier.class)),
-                                                 "RecordModifier");
-        String csv = "460332901~1~WOLFGANG~STEINBERG~76133~KARLSRUHE~INNENSTADT-OST~ADLERSTR.~10~";
-        ProcessRecord processRecord = new ProcessRecord(4711L, csv, Record.fromLine(csv));
-        inbox.send(recordModifier, processRecord);
-        ActorRef csv2Record = system.actorOf(FromConfig.getInstance().props(Props.create(CSV2Record.class)),
-                                             "CSV2Record");
+        system.actorOf(FromConfig.getInstance().props(Props.create(RecordModifier.class)),
+                       configApp.getString("recordModifier.name"));
+        system.actorOf(FromConfig.getInstance().props(Props.create(CSV2Record.class)), "CSV2Record");
     }
 
     /**
