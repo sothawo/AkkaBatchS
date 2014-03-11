@@ -23,7 +23,7 @@ wird gemessen. Zum Vergleich mit einer nicht parallelisierten Version gibt es ei
 
 Im folgenden werden die beteiligten Aktoren und die zwischen ihnen ausgetauschten Nachrichten beschrieben. Es wird
 ein Pull-Konzept verwendet, das dafür sorgt, dass die anstehende Arbeit auf die Worker verteilt wird,
-welche gerade frei sind.
+welche gerade frei sind. Die Idee hierfür stammt aus diesem [Blogeintrag](http://www.michaelpollmeier.com/akka-work-pulling-pattern/)
 
 ![Aktoren-Grafik](https://bitbucket.org/sothawo/akkabatch/downloads/AkkaBatch.svg)
 
