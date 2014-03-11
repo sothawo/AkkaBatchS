@@ -1,9 +1,6 @@
 package com.sothawo.akkabatch;
 
 import akka.actor.ActorRef;
-import akka.actor.UntypedActor;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import com.sothawo.akkabatch.messages.ProcessRecord;
 
 import java.text.MessageFormat;
@@ -13,11 +10,9 @@ import java.text.MessageFormat;
  *
  * @author P.J. Meisch (pj.meisch@sothawo.com).
  */
-public class RecordModifier extends UntypedActor {
+public class RecordModifier extends AkkaBatchActor {
 // ------------------------------ FIELDS ------------------------------
 
-    /** Logger */
-    LoggingAdapter log = Logging.getLogger(getContext().system(), this);
     /** der Writer */
     private ActorRef writer;
 
@@ -36,8 +31,9 @@ public class RecordModifier extends UntypedActor {
     }
 
     @Override
-    public void preStart() {
-        String writerName = context().system().settings().config().getString("com.sothawo.akkabatch.writer.ref.name");
+    public void preStart() throws Exception {
+        super.preStart();
+        String writerName = config.getString("com.sothawo.akkabatch.writer.ref.name");
         writer = context().actorFor(writerName);
         log.debug(MessageFormat.format("sende Daten zu {0}", writer.path()));
     }
