@@ -54,15 +54,19 @@ public class Reader extends AkkaBatchActor {
      * @param message
      */
     private void initReader(InitReader message) {
+        Boolean result = true;
         try {
             reader = new BufferedReader(
                     new InputStreamReader(new FileInputStream(message.getInputFilename()), message.getEncoding()));
         } catch (FileNotFoundException | UnsupportedEncodingException e) {
             log.error(e, "Initialisierung Reader");
-            sender().tell(new WorkDone(false), getSelf());
+            result = false;
         }
-        log.info(MessageFormat.format("Datei: {0}, Zeichensatz: {1}", message.getInputFilename(),
-                                      message.getEncoding()));
+        log.info(MessageFormat.format("Datei: {0}, Zeichensatz: {1}, Init-Ergebnis: {2}", message.getInputFilename(),
+                                      message.getEncoding(), result));
+        if (!result) {
+            sender().tell(new WorkDone(result), getSelf());
+        }
     }
 
     /**
