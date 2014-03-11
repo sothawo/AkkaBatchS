@@ -23,14 +23,17 @@ public abstract class AkkaBatchActor extends UntypedActor {
 
     /** Logger */
     protected LoggingAdapter log = Logging.getLogger(getContext().system(), this);
-    /** das Konfigurationsobjekt */
-    protected Config config;
+    /** das globale Konfigurationsobjekt */
+    protected Config configAll;
+    /** die Unterkonfiguration der Anwendung */
+    protected Config configApp;
 
 // ------------------------ CANONICAL METHODS ------------------------
 
     @Override
     public void preStart() throws Exception {
         super.preStart();
-        config = context().system().settings().config();
+        configAll = context().system().settings().config();
+        configApp = configAll.getConfig("com.sothawo.akkabatch");
     }
 }

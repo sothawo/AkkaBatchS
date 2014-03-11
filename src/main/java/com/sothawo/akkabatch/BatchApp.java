@@ -41,6 +41,8 @@ public class BatchApp {
     /** der Writer */
     // TODO: wird der wirklich als field benötigt?
     private ActorRef writer;
+    /** der Reader */
+    private ActorRef reader;
 
 // --------------------------- CONSTRUCTORS ---------------------------
 
@@ -77,6 +79,7 @@ public class BatchApp {
             configApp = configAll.getConfig("com.sothawo.akkabatch");
 
             initAkka(configAll);
+            initReader();
             initWriter();
 
             initWorkers();
@@ -116,6 +119,7 @@ public class BatchApp {
 
     /**
      * Initialisiert die Worker.
+     * TODO: muss das hier gemacht werden? Oder macht das nicht das System, wenn die benötigt werden?
      */
     private void initWorkers() {
         ActorRef recordModifier = system.actorOf(FromConfig.getInstance().props(Props.create(RecordModifier.class)),
@@ -123,6 +127,8 @@ public class BatchApp {
         String csv = "460332901~1~WOLFGANG~STEINBERG~76133~KARLSRUHE~INNENSTADT-OST~ADLERSTR.~10~";
         ProcessRecord processRecord = new ProcessRecord(4711L, csv, Record.fromLine(csv));
         inbox.send(recordModifier, processRecord);
+        ActorRef csv2Record = system.actorOf(FromConfig.getInstance().props(Props.create(CSV2Record.class)),
+                                             "CSV2Record");
     }
 
     /**
@@ -137,6 +143,12 @@ public class BatchApp {
         inbox = Inbox.create(system);
     }
 
+    /**
+     * Initialisiert den Reader.
+     */
+    private void initReader() {
+        reader = system.actorOf(Props.create(Reader.class), configApp.getString("reader.name"));
+    }
     /**
      * Initialisiert den Writer.
      */
