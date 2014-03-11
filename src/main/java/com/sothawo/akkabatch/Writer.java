@@ -3,6 +3,10 @@ package com.sothawo.akkabatch;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import com.sothawo.akkabatch.messages.InitResult;
+import com.sothawo.akkabatch.messages.InitWriter;
+import com.sothawo.akkabatch.messages.ProcessRecord;
+import com.sothawo.akkabatch.messages.WorkDone;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;

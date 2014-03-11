@@ -1,6 +1,6 @@
 package com.sothawo.akkabatch.serial;
 
-import com.sothawo.akkabatch.ProcessRecord;
+import com.sothawo.akkabatch.messages.ProcessRecord;
 import com.sothawo.akkabatch.Record;
 
 import java.io.BufferedReader;

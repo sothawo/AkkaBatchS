@@ -1,4 +1,6 @@
-package com.sothawo.akkabatch;
+package com.sothawo.akkabatch.messages;
+
+import com.sothawo.akkabatch.Record;
 
 import java.io.Serializable;
 

@@ -4,6 +4,7 @@ import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import com.sothawo.akkabatch.messages.ProcessRecord;
 
 import java.text.MessageFormat;
 

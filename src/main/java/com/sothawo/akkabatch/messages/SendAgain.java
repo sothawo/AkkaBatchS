@@ -1,13 +1,13 @@
-package com.sothawo.akkabatch;
+package com.sothawo.akkabatch.messages;
 
 import java.io.Serializable;
 
 /**
- * Registrierungsnachricht.
+ * Aufforderung, die überfälligen Daten noch ein Mal zu versenden.
  *
  * @author P.J. Meisch (pj.meisch@sothawo.com).
  */
-public final class Register implements Serializable {
+public final class SendAgain implements Serializable {
     // ------------------------------ FIELDS ------------------------------
     public static final long serialVersionUID = 42L;
 }
