@@ -25,11 +25,10 @@ public class RecordModifier extends UntypedActor {
     @Override
     public void onReceive(Object message) throws Exception {
         if (message instanceof ProcessRecord) {
-            ProcessRecord processRecordIn = (ProcessRecord) message;
-            ProcessRecord processRecordOut = new ProcessRecord(processRecordIn.getRecordId(),
-                                                               processRecordIn.getCsvOriginal(),
-                                                               Record.processRecord(processRecordIn.getRecord()));
-            writer.tell(processRecordOut, getSelf());
+            ProcessRecord in = (ProcessRecord) message;
+            ProcessRecord out = new ProcessRecord(in.getRecordId(), in.getCsvOriginal(),
+                                                  Record.processRecord(in.getRecord()));
+            writer.tell(out, getSelf());
         } else {
             unhandled(message);
         }
