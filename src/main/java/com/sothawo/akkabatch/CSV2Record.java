@@ -36,8 +36,9 @@ public class CSV2Record extends AkkaBatchActor {
             doWork((DoWork) message);
         } else if (message instanceof WorkAvailable) {
             reader.tell(getWork, getSelf());
+        } else {
+            unhandled(message);
         }
-        unhandled(message);
     }
 
     /**
@@ -63,6 +64,4 @@ public class CSV2Record extends AkkaBatchActor {
         recordModifier = getContext().actorFor(configApp.getString("recordModifier.refname"));
         log.debug(MessageFormat.format("Sende  Daten zu {0}", recordModifier.path()));
     }
-
-
 }
