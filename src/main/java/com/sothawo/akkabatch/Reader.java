@@ -8,6 +8,8 @@
  */
 package com.sothawo.akkabatch;
 
+import com.sothawo.akkabatch.messages.SendAgain;
+
 /**
  * Reader-Aktor.
  *
@@ -18,6 +20,17 @@ public class Reader extends AkkaBatchActor {
 
     @Override
     public void onReceive(Object message) throws Exception {
-        unhandled(message);
+        if (message instanceof SendAgain) {
+            resendMessages();
+        } else {
+            unhandled(message);
+        }
+    }
+
+    /**
+     * Versendet die bisher nicht beim Writer angekommenen Nachrichten noch ein mal.
+     */
+    private void resendMessages() {
+        log.debug("Daten erneut versenden");
     }
 }

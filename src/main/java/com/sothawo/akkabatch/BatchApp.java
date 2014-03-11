@@ -10,10 +10,11 @@ import akka.routing.FromConfig;
 import com.sothawo.akkabatch.messages.InitResult;
 import com.sothawo.akkabatch.messages.InitWriter;
 import com.sothawo.akkabatch.messages.ProcessRecord;
-import com.sothawo.akkabatch.messages.WorkDone;
+import com.sothawo.akkabatch.messages.SendAgain;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import scala.concurrent.duration.Duration;
+import scala.concurrent.duration.FiniteDuration;
 
 import java.text.MessageFormat;
 import java.util.concurrent.TimeUnit;
@@ -81,8 +82,8 @@ public class BatchApp {
             initAkka(configAll);
             initReader();
             initWriter();
-
             initWorkers();
+
 
             long startTime = System.currentTimeMillis();
 
@@ -94,16 +95,9 @@ public class BatchApp {
             // jede Message an die Inbox fährt das System herunter, spätestens nach 24 Stunden
 
 
-            // TODO: Dummy, der Writer schickt WorkDone
-            String csv = "460332901~1~WOLFGANG~STEINBERG~76133~KARLSRUHE~INNENSTADT-OST~ADLERSTR.~10~";
-            ProcessRecord processRecord = new ProcessRecord(4711L, csv, Record.fromLine(csv));
-//        inbox.send(writer, processRecord);
+            // TODO: rausnehmen, wenn System läuft.
+            // auf - nicht kommende Nachricht warten, dann Programmende
             Object msg = inbox.receive(Duration.create(configApp.getLong("run.duration"), TimeUnit.SECONDS));
-            if (msg instanceof WorkDone) {
-                log.info("work done");
-            } else {
-                log.error("unbekannte Nachricht: " + msg.getClass().getCanonicalName());
-            }
 
             //Auswertung
             long endTime = System.currentTimeMillis();
@@ -148,7 +142,13 @@ public class BatchApp {
      */
     private void initReader() {
         reader = system.actorOf(Props.create(Reader.class), configApp.getString("reader.name"));
+        // resend Scheduler starten
+        SendAgain resend = new SendAgain();
+        FiniteDuration intervalResend = Duration.create(configApp.getLong("intervall.resend"), TimeUnit.SECONDS);
+        system.scheduler().schedule(intervalResend, intervalResend, reader, resend, system.dispatcher(),
+                                    inbox.getRef());
     }
+
     /**
      * Initialisiert den Writer.
      */

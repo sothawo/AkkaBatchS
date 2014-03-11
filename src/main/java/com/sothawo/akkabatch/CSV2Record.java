@@ -33,7 +33,7 @@ public class CSV2Record extends AkkaBatchActor {
     @Override
     public void preStart() throws Exception {
         super.preStart();
-        reader = context().actorFor(configApp.getString("reader.ref.name"));
+        reader = context().actorFor(configApp.getString("reader.refname"));
         log.debug(MessageFormat.format("hole Daten zu {0}", reader.path()));
     }
 }
