@@ -4,13 +4,13 @@ Dieses Projekt dient dazu, die Batchverarbeitung mit Hilfe von [Akka](http://akk
 
 Es wird eine Datei eingelesen (csv), die Zeilen werden in Datensätze konvertiert und diese dann verarbeitet.
 Anschliessend werden die Daten wieder in Zeilen konvertiert und in eine Ausgabedatei geschrieben. Die benötigte Zeit
-wird gemessen. Zum Vergleich mit einer nicht parallelisierten Version gibt es eine serielle Variante
+wird gemessen. Zum Vergleich mit einer nicht parallelisierten Version gibt es eine serielle Variante.
 
 *Es gelten die folgenden Anforderungen:*
 
 - die Reihenfolge der Daten in der Ausgabedatei entspricht der in der Eingabedatei, auch ohne dass in der Eingabedatei
- eine laufende Nummer enthalten ist.
-- die Verarbeitung muss auch mit beliebig grossen Dateien funktionieren, ohne dass Speicherprobleme auftreten.
+ eine laufende Nummer enthalten ist
+- die Verarbeitung muss auch mit beliebig grossen Dateien funktionieren, ohne dass Speicherprobleme auftreten
 
 *Für diesen Test wird die folgende Verarbeitung durchgeführt:*
 
@@ -22,8 +22,8 @@ wird gemessen. Zum Vergleich mit einer nicht parallelisierten Version gibt es ei
 # die verwendeten Aktoren
 
 Im folgenden werden die beteiligten Aktoren und die zwischen ihnen ausgetauschten Nachrichten beschrieben. Es wird
-ein Pull-Konzept verwendet, das dafür sorgt, dass die anstehende Arbeit auf die Worker verteilt wird,
-welche gerade frei sind.
+ein Pull-Konzept verwendet, das dafür sorgt, dass die anstehende Arbeit auf die Worker verteilt wird, welche gerade
+frei sind. Die Idee hierfür stammt aus diesem [Blogeintrag](http://www.michaelpollmeier.com/akka-work-pulling-pattern/)
 
 ![Aktoren-Grafik](https://bitbucket.org/sothawo/akkabatch/downloads/AkkaBatch.svg)
 
@@ -31,9 +31,9 @@ welche gerade frei sind.
 
 Der Reader ist die Steuerungszentrale des Verarbeitungsprozesses. Bei ihm registrieren sich die CSV2Record Aktoren,
 er bekommt den Auftrag zur Verarbeitung einer Datei. Der Reader liest die Daten satzweise ein,
-so dass immer nur eine maximal definierte Anzahl von Recods im System ist. Dadurch wird verhindert,
+so dass immer nur eine maximal definierte Anzahl von Records im System ist. Dadurch wird verhindert,
 dass zum einen das System mit Daten überflutet wird, und zum anderen, das der Writer zu viele Daten puffern muss,
-wenn ein Datensatz zu lange in der Verarbeitung  bleibt.
+wenn ein Datensatz zu lange in der Verarbeitung bleibt.
 
 ### eingehende Nachrichten
 
@@ -54,7 +54,8 @@ die nicht in der vorgegebenen Zeit beim Writer angekommen sind, anzustossen.
 einmal versendete Daten nicht nnerhalb einer konfigurierten Zeit beim Writer angekommen sind.
 - DoWork, enthält Record-Id und CSV Zeile, wird an einen CVS2Record Aktor gesendet,
 wenn dieser die Nachricht GetWork an den Reader gesendet hat und es Daten zur Verarbeitung gibt.
-- WorkDone wird an Inbox gesendet, wenn alle Daten verarbeitet wurden
+- WorkDone wird an Inbox gesendet, wenn alle Daten verarbeitet wurden oder wenn eine Fehler aufgetreten ist. Die
+Nachricht enthält ein entsprechendes Flag.
 
 ## Writer
 
@@ -75,7 +76,7 @@ internen Datenstrukturen zurück.
 ### ausgehende Nachrichten
 
 - InitReady wird an Inbox gesendet wenn ein InitWriter empfangen wurde und die internen Strukturen initialisiert
-wurden
+wurden, enthält ein Flag, ob die Initialisierung erfolgreich war.
 - RecordReceived, enthält eine Record-ID und wird an den Reader gesendet, wenn ein ProcessRecord empfangen wurde,
 damit der Reader den entsprechenden Record nicht noch einmal in die Verarbeitung schickt.
 - RecordsWritten wird an den Reader gesendet, wenn Datensätze in die Ausgabe geschrieben wurden. Die Nachricht

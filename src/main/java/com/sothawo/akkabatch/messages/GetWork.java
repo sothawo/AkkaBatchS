@@ -1,13 +1,13 @@
-package com.sothawo.akkabatch;
+package com.sothawo.akkabatch.messages;
 
 import java.io.Serializable;
 
 /**
- * Nachricht, dass Arbeit verfügbar.
+ * Anfrage nach Arbeit.
  *
  * @author P.J. Meisch (pj.meisch@sothawo.com).
  */
-public class WorkAvailable implements Serializable {
+public final class GetWork implements Serializable {
     // ------------------------------ FIELDS ------------------------------
     public static final long serialVersionUID = 42L;
 }

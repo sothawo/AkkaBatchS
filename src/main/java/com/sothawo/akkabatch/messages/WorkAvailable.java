@@ -1,13 +1,13 @@
-package com.sothawo.akkabatch;
+package com.sothawo.akkabatch.messages;
 
 import java.io.Serializable;
 
 /**
- * Initialisierung abgeschlossen.
+ * Nachricht, dass Arbeit verfügbar.
  *
  * @author P.J. Meisch (pj.meisch@sothawo.com).
  */
-public final class InitReady implements Serializable {
+public class WorkAvailable implements Serializable {
     // ------------------------------ FIELDS ------------------------------
     public static final long serialVersionUID = 42L;
 }
