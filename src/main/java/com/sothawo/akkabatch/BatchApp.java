@@ -112,7 +112,7 @@ public class BatchApp {
      *         KOnfigurationsobjekt.
      */
     private void initAkka(Config config) {
-        system = ActorSystem.create(configApp.getString("akka.system.name"), config);
+        system = ActorSystem.create(configApp.getString("names.akka.system"), config);
         log = Logging.getLogger(system, this);
         inbox = Inbox.create(system);
     }
@@ -121,7 +121,7 @@ public class BatchApp {
      * Initialisiert den Reader.
      */
     private void initReader() {
-        reader = system.actorOf(Props.create(Reader.class), configApp.getString("reader.name"));
+        reader = system.actorOf(Props.create(Reader.class), configApp.getString("names.reader"));
         // resend Scheduler starten
         SendAgain resend = new SendAgain();
         FiniteDuration intervalResend = Duration.create(configApp.getLong("intervall.resend"), TimeUnit.SECONDS);
@@ -134,16 +134,16 @@ public class BatchApp {
      */
     private void initWorkers() {
         system.actorOf(FromConfig.getInstance().props(Props.create(RecordModifier.class)),
-                       configApp.getString("recordModifier.name"));
+                       configApp.getString("names.recordModifier"));
         system.actorOf(FromConfig.getInstance().props(Props.create(CSV2Record.class)),
-                       configApp.getString("csv2Record.name"));
+                       configApp.getString("names.csv2Record"));
     }
 
     /**
      * Initialisiert den Writer.
      */
     private void initWriter() throws AkkaBatchException {
-        writer = system.actorOf(Props.create(Writer.class), configApp.getString("writer.name"));
+        writer = system.actorOf(Props.create(Writer.class), configApp.getString("names.writer"));
         inbox.send(writer, new InitWriter(outfileName, configApp.getString("charset.outfile")));
         Object msg = inbox.receive(Duration.create(5, TimeUnit.SECONDS));
         if (msg instanceof InitResult) {

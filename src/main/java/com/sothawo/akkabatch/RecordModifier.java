@@ -33,7 +33,7 @@ public class RecordModifier extends AkkaBatchActor {
     @Override
     public void preStart() throws Exception {
         super.preStart();
-        writer = context().actorFor(configApp.getString("writer.refname"));
+        writer = context().actorFor(configApp.getString("names.writerRef"));
         log.debug(MessageFormat.format("sende Daten zu {0}", writer.path()));
     }
 }
