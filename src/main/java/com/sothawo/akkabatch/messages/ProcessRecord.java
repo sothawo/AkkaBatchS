@@ -12,21 +12,12 @@ public final class ProcessRecord implements Serializable {
 
     public static final long serialVersionUID = 42L;
 
-    /**
-     * Record-ID
-     */
-    private Long recordId = 0L;
-
-    /**
-     * Original csv Wert
-     */
-
-    private String csvOriginal = "";
-
-    /**
-     * der eigentliche Record
-     */
-    private Record record = null;
+    /** Record-ID */
+    private final Long recordId;
+    /** Original csv Wert */
+    private final String csvOriginal;
+    /** der eigentliche Record */
+    private final Record record;
 
 // --------------------------- CONSTRUCTORS ---------------------------
 

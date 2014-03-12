@@ -8,14 +8,19 @@ import java.io.Serializable;
  * @author P.J. Meisch (pj.meisch@sothawo.com).
  */
 public final class InitResult implements Serializable {
-    // ------------------------------ FIELDS ------------------------------
+// ------------------------------ FIELDS ------------------------------
+
     public static final long serialVersionUID = 42L;
     /** Erfolgsflag */
-    private Boolean success;
+    private final Boolean success;
+
+// --------------------------- CONSTRUCTORS ---------------------------
 
     public InitResult(Boolean success) {
         this.success = success;
     }
+
+// --------------------- GETTER / SETTER METHODS ---------------------
 
     public Boolean getSuccess() {
         return success;

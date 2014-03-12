@@ -18,9 +18,9 @@ public final class InitReader {
 
     public static final long serialVersionUID = 42L;
     /** Name der Eingabedatei */
-    private String inputFilename;
+    private final String inputFilename;
     /** Encoding der Datei */
-    private String encoding;
+    private final String encoding;
 
 // --------------------------- CONSTRUCTORS ---------------------------
 

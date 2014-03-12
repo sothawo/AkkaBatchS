@@ -10,7 +10,7 @@ public final class WorkDone implements Serializable {
 
     public static final long serialVersionUID = 42L;
     /** Erfolgsflag */
-    private Boolean success;
+    private final Boolean success;
 
 // --------------------------- CONSTRUCTORS ---------------------------
 

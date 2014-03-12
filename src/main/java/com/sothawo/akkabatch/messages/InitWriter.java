@@ -18,7 +18,7 @@ public final class InitWriter {
 
     public static final long serialVersionUID = 42L;
     /** Name der Ausgabedatei */
-    private String outputFilename;
+    private final String outputFilename;
     /** Encoding der Datei */
     private String encoding;
 
@@ -31,11 +31,11 @@ public final class InitWriter {
 
 // --------------------- GETTER / SETTER METHODS ---------------------
 
-    public String getOutputFilename() {
-        return outputFilename;
-    }
-
     public String getEncoding() {
         return encoding;
+    }
+
+    public String getOutputFilename() {
+        return outputFilename;
     }
 }
