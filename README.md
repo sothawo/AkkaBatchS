@@ -54,7 +54,7 @@ die nicht in der vorgegebenen Zeit beim Writer angekommen sind, anzustossen.
 einmal versendete Daten nicht nnerhalb einer konfigurierten Zeit beim Writer angekommen sind.
 - DoWork, enthält Record-Id und CSV Zeile, wird an einen CVS2Record Aktor gesendet,
 wenn dieser die Nachricht GetWork an den Reader gesendet hat und es Daten zur Verarbeitung gibt.
-- WorkDone wird an Inbox gesendet, wenn alle Daten verarbeitet wurden oder wenn eine Fehler aufgetreten ist. Die
+- WorkDone wird an Inbox gesendet, wenn alle Daten verarbeitet wurden oder wenn ein Fehler aufgetreten ist. Die
 Nachricht enthält ein entsprechendes Flag.
 
 ## Writer

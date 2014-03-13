@@ -120,7 +120,7 @@ public class BatchApp {
     /**
      * Initialisiert den Reader.
      */
-    private void initReader() {
+    private void initReader() throws AkkaBatchException {
         reader = system.actorOf(Props.create(Reader.class), configApp.getString("names.reader"));
         // resend Scheduler starten
         SendAgain resend = new SendAgain();
@@ -145,6 +145,7 @@ public class BatchApp {
     private void initWriter() throws AkkaBatchException {
         writer = system.actorOf(Props.create(Writer.class), configApp.getString("names.writer"));
         inbox.send(writer, new InitWriter(outfileName, configApp.getString("charset.outfile")));
+        log.info("warten auf Writer-Intialisierung...");
         Object msg = inbox.receive(Duration.create(5, TimeUnit.SECONDS));
         if (msg instanceof InitResult) {
             InitResult initResult = (InitResult) msg;
