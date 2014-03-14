@@ -117,7 +117,8 @@ public class Reader extends AkkaBatchActor {
      * füllt den Puffer der zu verarbeitenden Daten und benachrichtigt die Worker, dass Arbeit da ist.
      */
     private void fillWorkToBeDone() throws IOException {
-        while (null != reader && actNumRecordsInSystem < maxNumRecordsInSystem) {
+        boolean breakout = false;
+        while (null != reader && actNumRecordsInSystem < maxNumRecordsInSystem&& !breakout) {
             String line = reader.readLine();
             if (line != null) {
                 workToBeDone.add(new DoWork(recordSerialNo++, line));
@@ -127,6 +128,11 @@ public class Reader extends AkkaBatchActor {
                 // keine weiteren Daten mehr
                 reader.close();
                 reader = null;
+            }
+            if(500 == numRecordsInInput) {
+                // nach den ersten 500 erst nicht weitermachen, damit die Maschinerie schnell anlaufen kann
+                // der Rest wird nach der Verarbeitung des ersten Satzes gemacht
+                breakout = true;
             }
         }
         if (0 < workToBeDone.size()) {

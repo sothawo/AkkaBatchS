@@ -55,6 +55,10 @@ public final class Record {
         record.district = StringUtils.upperCase(origin.district);
         record.street = StringUtils.upperCase(origin.street);
         record.number = StringUtils.upperCase(origin.number);
+        try {
+            Thread.sleep(1);
+        } catch (InterruptedException ignored) {
+        }
         return record;
     }
 
