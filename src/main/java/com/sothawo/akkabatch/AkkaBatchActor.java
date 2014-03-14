@@ -22,7 +22,7 @@ public abstract class AkkaBatchActor extends UntypedActor {
 // ------------------------------ FIELDS ------------------------------
 
     /** Logger */
-    protected LoggingAdapter log = Logging.getLogger(getContext().system(), this);
+    protected final LoggingAdapter log = Logging.getLogger(getContext().system(), this);
     /** das globale Konfigurationsobjekt */
     protected Config configAll;
     /** die Unterkonfiguration der Anwendung */

@@ -8,7 +8,7 @@
  */
 package com.sothawo.akkabatch;
 
-import akka.actor.ActorRef;
+import akka.actor.ActorSelection;
 import com.sothawo.akkabatch.messages.*;
 
 import java.text.MessageFormat;
@@ -22,11 +22,11 @@ public class CSV2Record extends AkkaBatchActor {
 // ------------------------------ FIELDS ------------------------------
 
     /** der Reader */
-    private ActorRef reader;
+    private ActorSelection reader;
     /** der Aktor für den nächsten Schritt */
-    private ActorRef recordModifier;
+    private ActorSelection recordModifier;
     /** GetWork Message */
-    private GetWork getWork = new GetWork();
+    private final GetWork getWork = new GetWork();
 
 // ------------------------ CANONICAL METHODS ------------------------
 
@@ -44,7 +44,7 @@ public class CSV2Record extends AkkaBatchActor {
     /**
      * die eigentliche Verarbeitung.
      *
-     * @param doWork
+     * @param doWork     zu verarbeitende Daten
      */
     private void doWork(DoWork doWork) {
         recordModifier.tell(new ProcessRecord(doWork.getRecordId(), doWork.getCsvOriginal(),
@@ -56,12 +56,12 @@ public class CSV2Record extends AkkaBatchActor {
     public void preStart() throws Exception {
         super.preStart();
 
-        reader = getContext().actorFor(configApp.getString("names.readerRef"));
+        reader = getContext().actorSelection(configApp.getString("names.readerRef"));
         log.debug(MessageFormat.format("hole Daten von {0}", reader.path()));
 
         reader.tell(new Register(), getSelf());
 
-        recordModifier = getContext().actorFor(configApp.getString("names.recordModifierRef"));
+        recordModifier = getContext().actorSelection(configApp.getString("names.recordModifierRef"));
         log.debug(MessageFormat.format("Sende  Daten zu {0}", recordModifier.path()));
     }
 }

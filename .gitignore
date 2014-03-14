@@ -2,4 +2,7 @@
 .idea
 .eclipse
 target
+
+
 data/out.csv
+data/[0-9]*.csv

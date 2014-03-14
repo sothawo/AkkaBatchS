@@ -1,6 +1,7 @@
 package com.sothawo.akkabatch;
 
 import akka.actor.ActorRef;
+import akka.actor.ActorSelection;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import com.sothawo.akkabatch.messages.*;
@@ -20,11 +21,11 @@ public class Writer extends AkkaBatchActor {
 // ------------------------------ FIELDS ------------------------------
 
     /** Logger */
-    LoggingAdapter log = Logging.getLogger(getContext().system(), this);
+    final LoggingAdapter log = Logging.getLogger(getContext().system(), this);
     /** für die eigentliche Ausgabe */
     private PrintWriter writer;
     /** Reader-Aktor */
-    private ActorRef reader;
+    private ActorSelection reader;
     /** Puffer als TreeMap, da sortiert auf die Sätze zugegriffen werden muss */
     private TreeMap<Long, ProcessRecord> outputBuffer = new TreeMap<>();
     /** recordId des nächsten zu schriebenden Satzes */
@@ -90,7 +91,7 @@ public class Writer extends AkkaBatchActor {
     @Override
     public void preStart() throws Exception {
         super.preStart();
-        reader = getContext().actorFor(configApp.getString("names.readerRef"));
+        reader = getContext().actorSelection(configApp.getString("names.readerRef"));
         log.debug(MessageFormat.format("sende Infos an {0}", reader.path()));
     }
 

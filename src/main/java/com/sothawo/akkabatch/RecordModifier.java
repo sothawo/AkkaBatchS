@@ -1,6 +1,7 @@
 package com.sothawo.akkabatch;
 
 import akka.actor.ActorRef;
+import akka.actor.ActorSelection;
 import com.sothawo.akkabatch.messages.ProcessRecord;
 
 import java.text.MessageFormat;
@@ -14,7 +15,7 @@ public class RecordModifier extends AkkaBatchActor {
 // ------------------------------ FIELDS ------------------------------
 
     /** der Writer */
-    private ActorRef writer;
+    private ActorSelection writer;
 
 // ------------------------ CANONICAL METHODS ------------------------
 
@@ -33,7 +34,7 @@ public class RecordModifier extends AkkaBatchActor {
     @Override
     public void preStart() throws Exception {
         super.preStart();
-        writer = context().actorFor(configApp.getString("names.writerRef"));
+        writer = context().actorSelection(configApp.getString("names.writerRef"));
         log.debug(MessageFormat.format("sende Daten zu {0}", writer.path()));
     }
 }

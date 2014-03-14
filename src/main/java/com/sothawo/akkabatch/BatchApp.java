@@ -36,9 +36,6 @@ public class BatchApp {
     private ActorSystem system;
     /** das Inbox Objekt des Akka Systems */
     private Inbox inbox;
-    /** der Writer */
-    // TODO: wird der wirklich als field benötigt?
-    private ActorRef writer;
     /** der Reader */
     private ActorRef reader;
 
@@ -120,7 +117,7 @@ public class BatchApp {
     /**
      * Initialisiert den Reader.
      */
-    private void initReader() throws AkkaBatchException {
+    private void initReader() {
         reader = system.actorOf(Props.create(Reader.class), configApp.getString("names.reader"));
         // resend Scheduler starten
         SendAgain resend = new SendAgain();
@@ -143,7 +140,8 @@ public class BatchApp {
      * Initialisiert den Writer.
      */
     private void initWriter() throws AkkaBatchException {
-        writer = system.actorOf(Props.create(Writer.class), configApp.getString("names.writer"));
+        /* der Writer */
+        ActorRef writer = system.actorOf(Props.create(Writer.class), configApp.getString("names.writer"));
         inbox.send(writer, new InitWriter(outfileName, configApp.getString("charset.outfile")));
         log.info("warten auf Writer-Intialisierung...");
         Object msg = inbox.receive(Duration.create(5, TimeUnit.SECONDS));

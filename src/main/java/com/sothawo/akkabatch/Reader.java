@@ -34,7 +34,7 @@ public class Reader extends AkkaBatchActor {
     /** eine Instanz der Nachricht reicht */
     private WorkAvailable workAvailable;
     /** Liste mit Workern */
-    private List<ActorRef> workerList = new LinkedList<>();
+    private final List<ActorRef> workerList = new LinkedList<>();
     /** aktuell zu verarbeitende Daten */
     private List<DoWork> workToBeDone = new LinkedList<>();
     /** maximale Anzahl gleichzeitg im System befindlicher Datensätze */
@@ -90,7 +90,26 @@ public class Reader extends AkkaBatchActor {
                                       message.getEncoding(), result));
         // Fehler zurückmelden
         if (!result) {
-            sender().tell(new WorkDone(result), getSelf());
+            sender().tell(new WorkDone(false), getSelf());
+        }
+    }
+
+    /**
+     * MessageHandler, lädt die nöchsten Daten bzw. beendet die Verarbeitung
+     *
+     * @param message
+     *         enthält die Anzahl der geschriebenen Daten
+     *
+     * @throws IOException
+     */
+    private void recordsWritten(RecordsWritten message) throws IOException {
+        Long numRecordsWritten = message.getNumRecords();
+        actNumRecordsInSystem -= numRecordsWritten;
+        fillWorkToBeDone();
+        numRecordsInOutput += numRecordsWritten;
+        if (null == reader && numRecordsInInput == numRecordsInOutput) {
+            // alles fertig
+            inbox.tell(new WorkDone(Boolean.TRUE), getSelf());
         }
     }
 
@@ -121,24 +140,6 @@ public class Reader extends AkkaBatchActor {
     private void notifyWorkers() {
         for (ActorRef worker : workerList) {
             worker.tell(workAvailable, getSelf());
-        }
-    }
-
-    /**
-     * MessageHandler, lädt die nöchsten Daten bzw. beendet die Verarbeitung
-     *
-     * @param message
-     *
-     * @throws IOException
-     */
-    private void recordsWritten(RecordsWritten message) throws IOException {
-        Long numRecordsWritten = message.getNumRecords();
-        actNumRecordsInSystem -= numRecordsWritten;
-        fillWorkToBeDone();
-        numRecordsInOutput += numRecordsWritten;
-        if (null == reader && numRecordsInInput == numRecordsInOutput) {
-            // alles fertig
-            inbox.tell(new WorkDone(Boolean.TRUE), getSelf());
         }
     }
 

@@ -20,7 +20,7 @@ public final class InitWriter {
     /** Name der Ausgabedatei */
     private final String outputFilename;
     /** Encoding der Datei */
-    private String encoding;
+    private final String encoding;
 
 // --------------------------- CONSTRUCTORS ---------------------------
 
