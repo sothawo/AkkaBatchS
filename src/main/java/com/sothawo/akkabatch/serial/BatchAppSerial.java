@@ -1,7 +1,7 @@
 package com.sothawo.akkabatch.serial;
 
-import com.sothawo.akkabatch.messages.ProcessRecord;
 import com.sothawo.akkabatch.Record;
+import com.sothawo.akkabatch.messages.ProcessRecord;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -75,6 +75,9 @@ public class BatchAppSerial {
             ProcessRecord processRecord = new ProcessRecord(numRecords, line,
                                                             Record.processRecord(Record.fromLine(line)));
             writer.println(processRecord.getCsvOriginal());
+            if(0 == (numRecords % 10000)){
+                System.out.println(MessageFormat.format("verarbeitet: {0}: ", numRecords));
+            }
             line = reader.readLine();
         }
 

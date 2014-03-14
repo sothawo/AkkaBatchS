@@ -1,6 +1,5 @@
 package com.sothawo.akkabatch;
 
-import akka.actor.ActorRef;
 import akka.actor.ActorSelection;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
@@ -81,6 +80,9 @@ public class Writer extends AkkaBatchActor {
             writer.println(record.getCsvOriginal());
             recordsWritten++;
             nextRecordId++;
+            if(0 == (nextRecordId % 10000)){
+                log.debug(MessageFormat.format("verarbeitet: {0}", nextRecordId));
+            }
         }
 
         if (0 < recordsWritten) {
