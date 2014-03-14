@@ -21,8 +21,6 @@ import java.text.MessageFormat;
 public class CSV2Record extends AkkaBatchActor {
 // ------------------------------ FIELDS ------------------------------
 
-    /** der Reader */
-    private ActorSelection reader;
     /** der Aktor für den nächsten Schritt */
     private ActorSelection recordModifier;
     /** GetWork Message */
@@ -35,7 +33,7 @@ public class CSV2Record extends AkkaBatchActor {
         if (message instanceof DoWork) {
             doWork((DoWork) message);
         } else if (message instanceof WorkAvailable) {
-            reader.tell(getWork, getSelf());
+            sender().tell(getWork, getSelf());
         } else {
             unhandled(message);
         }
@@ -44,21 +42,21 @@ public class CSV2Record extends AkkaBatchActor {
     /**
      * die eigentliche Verarbeitung.
      *
-     * @param doWork     zu verarbeitende Daten
+     * @param doWork
+     *         zu verarbeitende Daten
      */
     private void doWork(DoWork doWork) {
         recordModifier.tell(new ProcessRecord(doWork.getRecordId(), doWork.getCsvOriginal(),
                                               Record.fromLine(doWork.getCsvOriginal())), getSelf());
-        reader.tell(getWork, getSelf());
+        sender().tell(getWork, getSelf());
     }
 
     @Override
     public void preStart() throws Exception {
         super.preStart();
 
-        reader = getContext().actorSelection(configApp.getString("names.readerRef"));
+        ActorSelection reader = getContext().actorSelection(configApp.getString("names.readerRef"));
         log.debug(MessageFormat.format("hole Daten von {0}", reader.path()));
-
         reader.tell(new Register(), getSelf());
 
         recordModifier = getContext().actorSelection(configApp.getString("names.recordModifierRef"));

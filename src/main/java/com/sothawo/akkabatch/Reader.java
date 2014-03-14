@@ -95,7 +95,7 @@ public class Reader extends AkkaBatchActor {
     }
 
     /**
-     * MessageHandler, lädt die nöchsten Daten bzw. beendet die Verarbeitung
+     * MessageHandler, lädt die nächsten Daten bzw. beendet die Verarbeitung
      *
      * @param message
      *         enthält die Anzahl der geschriebenen Daten
@@ -118,7 +118,7 @@ public class Reader extends AkkaBatchActor {
      */
     private void fillWorkToBeDone() throws IOException {
         boolean breakout = false;
-        while (null != reader && actNumRecordsInSystem < maxNumRecordsInSystem&& !breakout) {
+        while (null != reader && actNumRecordsInSystem < maxNumRecordsInSystem && !breakout) {
             String line = reader.readLine();
             if (line != null) {
                 workToBeDone.add(new DoWork(recordSerialNo++, line));
@@ -129,7 +129,7 @@ public class Reader extends AkkaBatchActor {
                 reader.close();
                 reader = null;
             }
-            if(500 == numRecordsInInput) {
+            if (500 == numRecordsInInput) {
                 // nach den ersten 500 erst nicht weitermachen, damit die Maschinerie schnell anlaufen kann
                 // der Rest wird nach der Verarbeitung des ersten Satzes gemacht
                 breakout = true;
