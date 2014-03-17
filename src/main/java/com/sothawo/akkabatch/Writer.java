@@ -19,15 +19,25 @@ import java.util.TreeMap;
 public class Writer extends AkkaBatchActor {
 // ------------------------------ FIELDS ------------------------------
 
-    /** Logger */
+    /**
+     * Logger
+     */
     final LoggingAdapter log = Logging.getLogger(getContext().system(), this);
-    /** für die eigentliche Ausgabe */
+    /**
+     * für die eigentliche Ausgabe
+     */
     private PrintWriter writer;
-    /** Reader-Aktor */
+    /**
+     * Reader-Aktor
+     */
     private ActorSelection reader;
-    /** Puffer als TreeMap, da sortiert auf die Sätze zugegriffen werden muss */
-    private TreeMap<Long, ProcessRecord> outputBuffer = new TreeMap<>();
-    /** recordId des nächsten zu schriebenden Satzes */
+    /**
+     * Puffer als TreeMap, da sortiert auf die Sätze zugegriffen werden muss
+     */
+    private final TreeMap<Long, ProcessRecord> outputBuffer = new TreeMap<>();
+    /**
+     * recordId des nächsten zu schreibenden Satzes
+     */
     private long nextRecordId;
 
 // ------------------------ CANONICAL METHODS ------------------------
@@ -44,9 +54,35 @@ public class Writer extends AkkaBatchActor {
     }
 
     /**
+     * verarbeitet den nächsten Datensatz.
+     *
+     * @param processRecord Datensatz zum Schreiben.
+     */
+    private void processRecord(ProcessRecord processRecord) {
+        Long recordId = processRecord.getRecordId();
+        reader.tell(new RecordReceived(recordId), getSelf());
+        outputBuffer.put(recordId, processRecord);
+
+        long recordsWritten = 0;
+        while (!outputBuffer.isEmpty() && nextRecordId == outputBuffer.firstKey()) {
+            ProcessRecord record = outputBuffer.remove(nextRecordId);
+            writer.println(record.getCsvOriginal());
+            recordsWritten++;
+            nextRecordId++;
+            if (0 == (nextRecordId % 10000)) {
+                log.debug(MessageFormat.format("verarbeitet: {0}", nextRecordId));
+            }
+        }
+
+        if (0 < recordsWritten) {
+            reader.tell(new RecordsWritten(recordsWritten), getSelf());
+        }
+    }
+
+    /**
      * Initialisiert den Writer.
      *
-     * @param message
+     * @param message die Nachricht
      */
     private void initWriter(InitWriter message) {
         Boolean result = true;
@@ -63,31 +99,14 @@ public class Writer extends AkkaBatchActor {
         sender().tell(new InitResult(result), getSelf());
     }
 
-    /**
-     * verarbeitet den nächsten Datensatz.
-     *
-     * @param processRecord
-     *         Datensatz zum Schreiben.
-     */
-    private void processRecord(ProcessRecord processRecord) {
-        Long recordId = processRecord.getRecordId();
-        reader.tell(new RecordReceived(recordId), getSelf());
-        outputBuffer.put(recordId, processRecord);
-
-        long recordsWritten = 0;
-        while (!outputBuffer.isEmpty() && nextRecordId == outputBuffer.firstKey()) {
-            ProcessRecord record = outputBuffer.remove(nextRecordId);
-            writer.println(record.getCsvOriginal());
-            recordsWritten++;
-            nextRecordId++;
-            if(0 == (nextRecordId % 10000)){
-                log.debug(MessageFormat.format("verarbeitet: {0}", nextRecordId));
-            }
+    @Override
+    public void postStop() throws Exception {
+        if (null != writer) {
+            writer.flush();
+            writer.close();
+            writer = null;
         }
-
-        if (0 < recordsWritten) {
-            reader.tell(new RecordsWritten(recordsWritten), getSelf());
-        }
+        super.postStop();
     }
 
     @Override
@@ -95,15 +114,5 @@ public class Writer extends AkkaBatchActor {
         super.preStart();
         reader = getContext().actorSelection(configApp.getString("names.readerRef"));
         log.debug(MessageFormat.format("sende Infos an {0}", reader.path()));
-    }
-
-    @Override
-    public void postStop() throws Exception {
-        if(null != writer) {
-            writer.flush();
-            writer.close();
-            writer = null;
-        }
-        super.postStop();
     }
 }

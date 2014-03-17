@@ -1,6 +1,5 @@
 package com.sothawo.akkabatch;
 
-import akka.actor.ActorRef;
 import akka.actor.ActorSelection;
 import com.sothawo.akkabatch.messages.ProcessRecord;
 
