@@ -68,6 +68,7 @@ public class BatchApp {
      */
     private void run() {
         try {
+            System.out.println("#Cores: " + Runtime.getRuntime().availableProcessors());
             // Konfiguration laden, das macht theoretisch ActorSystem auch, aber so verwenden wir die gleiche
             // Konfiguration
             Config configAll = ConfigFactory.load();

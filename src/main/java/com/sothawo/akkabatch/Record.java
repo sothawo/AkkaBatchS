@@ -58,6 +58,7 @@ public final class Record {
         try {
             Thread.sleep(1);
         } catch (InterruptedException ignored) {
+            System.err.println("oops, interrupted");
         }
         return record;
     }
