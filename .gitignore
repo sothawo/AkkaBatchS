@@ -4,5 +4,4 @@
 target
 
 
-data/out.csv
-data/[0-9]*.csv
+data/*.csv
