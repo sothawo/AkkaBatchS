@@ -2,6 +2,8 @@ package com.sothawo.akkabatch;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Random;
+
 /**
  * Datensatz.
  */
@@ -17,6 +19,8 @@ public final class Record {
     private String district;
     private String street;
     private String number;
+
+    private static Random rand = new Random();
 
 // -------------------------- STATIC METHODS --------------------------
 
@@ -55,10 +59,14 @@ public final class Record {
         record.district = StringUtils.upperCase(origin.district);
         record.street = StringUtils.upperCase(origin.street);
         record.number = StringUtils.upperCase(origin.number);
-        try {
-            Thread.sleep(1);
-        } catch (InterruptedException ignored) {
-            System.err.println("oops, interrupted");
+        if (0 == (rand.nextInt() % 2)) {
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException ignored) {
+                System.err.println("oops, interrupted");
+            }
+        } else {
+            Fibonacci.calculate(1000);
         }
         return record;
     }
