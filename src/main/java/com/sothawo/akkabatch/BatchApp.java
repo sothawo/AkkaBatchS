@@ -123,8 +123,8 @@ public class BatchApp {
         // resend Scheduler starten
         SendAgain resend = new SendAgain();
         FiniteDuration intervalResend = Duration.create(configApp.getLong("intervall.resend"), TimeUnit.SECONDS);
-        system.scheduler().schedule(intervalResend, intervalResend, reader, resend, system.dispatcher(),
-                                    inbox.getRef());
+//        system.scheduler().schedule(intervalResend, intervalResend, reader, resend, system.dispatcher(),
+//                                    inbox.getRef());
     }
 
     /**
