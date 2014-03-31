@@ -97,6 +97,10 @@ public class Reader extends AkkaBatchActor {
      */
     private void initReader(InitReader message) {
         inbox = sender();
+        workAvailable = new WorkAvailable();
+        maxNumRecordsInSystem = configApp.getLong("numRecords.inSystem");
+        workToBeDone.clear();
+        actNumRecordsInSystem = 0;
         recordSerialNo = 1;
         numRecordsInInput = 0;
         numRecordsInOutput = 0;
@@ -156,6 +160,7 @@ public class Reader extends AkkaBatchActor {
         numRecordsInOutput += numRecordsWritten;
         if (null == reader && numRecordsInInput == numRecordsInOutput) {
             // alles fertig
+            log.debug(MessageFormat.format("durchschn. Verarbeitungszeit: {0} ms", averageProcessingTimeMs));
             inbox.tell(new WorkDone(Boolean.TRUE), getSelf());
         }
     }
@@ -225,20 +230,5 @@ public class Reader extends AkkaBatchActor {
             doWorkInfos.put(doWork.getRecordId(), new DoWorkInfo(doWork));
             sender().tell(doWork, getSelf());
         }
-    }
-
-    /**
-     * Initialisierung vor dem Messagehandling
-     *
-     * @throws Exception
-     */
-    @Override
-    public void preStart() throws Exception {
-        super.preStart();
-        workAvailable = new WorkAvailable();
-        maxNumRecordsInSystem = configApp.getLong("numRecords.inSystem");
-        workToBeDone.clear();
-        actNumRecordsInSystem = 0;
-        recordSerialNo = 0;
     }
 }
