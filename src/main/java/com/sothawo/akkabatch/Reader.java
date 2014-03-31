@@ -59,6 +59,12 @@ public class Reader extends AkkaBatchActor {
     /** Anzahl in die Ausgabedatei geschriebener Sätze */
     private long numRecordsInOutput;
 
+    /** Anzahl schon verarbeiteter, aber noch nicht geschriebener Sätze */
+    private long numRecordsProcessed;
+
+    /** durchschnittliche Verarbeitungszeit eines Datensatzes */
+    private long averageProcessingTimeMs;
+
     /** Map mit Infos zu den aktuellen DoWork Nachrichten */
     private Map<Long, DoWorkInfo> doWorkInfos = new HashMap<>();
 
@@ -94,6 +100,8 @@ public class Reader extends AkkaBatchActor {
         recordSerialNo = 1;
         numRecordsInInput = 0;
         numRecordsInOutput = 0;
+        numRecordsProcessed = 0;
+        averageProcessingTimeMs = 0;
         Boolean result = true;
         try {
             reader = new BufferedReader(
@@ -112,7 +120,8 @@ public class Reader extends AkkaBatchActor {
     }
 
     /**
-     * MessageHandler, entfernt den entsprechenden Datensatz aus der Map der eventuell neu zu versendenden Nachrichten.
+     * MessageHandler, entfernt den entsprechenden Datensatz aus der Map der eventuell neu zu versendenden Nachrichten
+     * und aktualisiert die durchschnittliche Verarbeitungszeit.
      *
      * @param message
      *         enthält die Id des vom Writer empfangenen Datensatzes.
@@ -121,8 +130,15 @@ public class Reader extends AkkaBatchActor {
         DoWorkInfo doWorkInfo = doWorkInfos.get(message.getId());
         if (null != doWorkInfo) {
             doWorkInfos.remove(message.getId());
-            // TODO: Laufzeit ermitteln, um das resend Intervall anzupassen
             long duration = System.currentTimeMillis() - doWorkInfo.getTimestamp();
+            if (0 == averageProcessingTimeMs) {
+                averageProcessingTimeMs = duration;
+            } else if (duration != averageProcessingTimeMs) {
+                // TODO: evtl nur neu setzen, wenn Abweichung grösser Schwellwert
+                averageProcessingTimeMs =
+                        ((averageProcessingTimeMs * numRecordsProcessed) + duration) / (numRecordsProcessed + 1);
+            }
+            numRecordsProcessed++;
         }
     }
 
