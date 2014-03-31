@@ -16,8 +16,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.MessageFormat;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Reader-Aktor.
@@ -27,46 +29,38 @@ import java.util.List;
 public class Reader extends AkkaBatchActor {
 // ------------------------------ FIELDS ------------------------------
 
-    /**
-     * die Inbox des Systems, für die letzte Meldung am Schluss
-     */
+    /** die Inbox des Systems, für die letzte Meldung am Schluss */
     private ActorRef inbox;
-    /**
-     * zum Lesen der Eingabedaten
-     */
+
+    /** zum Lesen der Eingabedaten */
     private BufferedReader reader;
-    /**
-     * eine Instanz der Nachricht reicht
-     */
+
+    /** eine Instanz der Nachricht reicht */
     private WorkAvailable workAvailable;
-    /**
-     * Liste mit Workern
-     */
+
+    /** Liste mit Workern */
     private final List<ActorRef> workerList = new LinkedList<>();
-    /**
-     * aktuell zu verarbeitende Daten
-     */
+
+    /** aktuell zu verarbeitende Daten */
     private final List<DoWork> workToBeDone = new LinkedList<>();
-    /**
-     * maximale Anzahl gleichzeitg im System befindlicher Datensätze
-     */
+
+    /** maximale Anzahl gleichzeitg im System befindlicher Datensätze */
     private long maxNumRecordsInSystem;
-    /**
-     * aktuelle Anzahl gleichzeitig im System befindlicher Datensätze
-     */
+
+    /** aktuelle Anzahl gleichzeitig im System befindlicher Datensätze */
     private long actNumRecordsInSystem;
-    /**
-     * recordId des nächsten zu lesenden Satzes
-     */
+
+    /** recordId des nächsten zu lesenden Satzes */
     private long recordSerialNo;
-    /**
-     * Anzahl aus der Eingabedatei gelesener Sätze
-     */
+
+    /** Anzahl aus der Eingabedatei gelesener Sätze */
     private long numRecordsInInput;
-    /**
-     * Anzahl in die Ausgabedatei geschriebener Sätze
-     */
+
+    /** Anzahl in die Ausgabedatei geschriebener Sätze */
     private long numRecordsInOutput;
+
+    /** Map mit Infos zu den aktuellen DoWork Nachrichten */
+    private Map<Long, DoWorkInfo> doWorkInfos = new HashMap<>();
 
 // ------------------------ CANONICAL METHODS ------------------------
 
@@ -80,6 +74,8 @@ public class Reader extends AkkaBatchActor {
             sendWork();
         } else if (message instanceof SendAgain) {
             resendMessages();
+        } else if (message instanceof RecordReceived) {
+            recordReceived((RecordReceived) message);
         } else if (message instanceof RecordsWritten) {
             recordsWritten((RecordsWritten) message);
         } else {
@@ -88,20 +84,10 @@ public class Reader extends AkkaBatchActor {
     }
 
     /**
-     * registriert den Sender als Worker und gibt ihm evtl. gleich den Hinweis auf Arbeit
-     */
-    private void registerWorker() {
-        workerList.add(sender());
-        log.info("Registrierung von " + sender().path());
-        if (0 < workToBeDone.size()) {
-            sender().tell(workAvailable, getSelf());
-        }
-    }
-
-    /**
      * MessageHandler, initialisiert den Reader und startet die Verarbeitung.
      *
-     * @param message die Nachricht
+     * @param message
+     *         die Nachricht
      */
     private void initReader(InitReader message) {
         inbox = sender();
@@ -122,6 +108,39 @@ public class Reader extends AkkaBatchActor {
         // Fehler zurückmelden
         if (!result) {
             sender().tell(new WorkDone(false), getSelf());
+        }
+    }
+
+    /**
+     * MessageHandler, entfernt den entsprechenden Datensatz aus der Map der eventuell neu zu versendenden Nachrichten.
+     *
+     * @param message
+     *         enthält die Id des vom Writer empfangenen Datensatzes.
+     */
+    private void recordReceived(RecordReceived message) {
+        DoWorkInfo doWorkInfo = doWorkInfos.get(message.getId());
+        if (null != doWorkInfo) {
+            doWorkInfos.remove(message.getId());
+            // TODO: Laufzeit ermitteln, um das resend Intervall anzupassen
+            long duration = System.currentTimeMillis() - doWorkInfo.getTimestamp();
+        }
+    }
+
+    /**
+     * MessageHandler, lädt die nächsten Daten bzw. beendet die Verarbeitung
+     *
+     * @param message
+     *         enthält die Anzahl der geschriebenen Daten
+     * @throws IOException
+     */
+    private void recordsWritten(RecordsWritten message) throws IOException {
+        Long numRecordsWritten = message.getNumRecords();
+        actNumRecordsInSystem -= numRecordsWritten;
+        fillWorkToBeDone();
+        numRecordsInOutput += numRecordsWritten;
+        if (null == reader && numRecordsInInput == numRecordsInOutput) {
+            // alles fertig
+            inbox.tell(new WorkDone(Boolean.TRUE), getSelf());
         }
     }
 
@@ -162,13 +181,13 @@ public class Reader extends AkkaBatchActor {
     }
 
     /**
-     * schickt den nächsten Satz zur Verarbeitung an einen Worker.
+     * registriert den Sender als Worker und gibt ihm evtl. gleich den Hinweis auf Arbeit
      */
-    private void sendWork() {
+    private void registerWorker() {
+        workerList.add(sender());
+        log.info("Registrierung von " + sender().path());
         if (0 < workToBeDone.size()) {
-            DoWork doWork = workToBeDone.get(0);
-            workToBeDone.remove(0);
-            sender().tell(doWork, getSelf());
+            sender().tell(workAvailable, getSelf());
         }
     }
 
@@ -181,19 +200,14 @@ public class Reader extends AkkaBatchActor {
     }
 
     /**
-     * MessageHandler, lädt die nächsten Daten bzw. beendet die Verarbeitung
-     *
-     * @param message enthält die Anzahl der geschriebenen Daten
-     * @throws IOException
+     * schickt den nächsten Satz zur Verarbeitung an einen Worker.
      */
-    private void recordsWritten(RecordsWritten message) throws IOException {
-        Long numRecordsWritten = message.getNumRecords();
-        actNumRecordsInSystem -= numRecordsWritten;
-        fillWorkToBeDone();
-        numRecordsInOutput += numRecordsWritten;
-        if (null == reader && numRecordsInInput == numRecordsInOutput) {
-            // alles fertig
-            inbox.tell(new WorkDone(Boolean.TRUE), getSelf());
+    private void sendWork() {
+        if (0 < workToBeDone.size()) {
+            DoWork doWork = workToBeDone.get(0);
+            workToBeDone.remove(0);
+            doWorkInfos.put(doWork.getRecordId(), new DoWorkInfo(doWork));
+            sender().tell(doWork, getSelf());
         }
     }
 
