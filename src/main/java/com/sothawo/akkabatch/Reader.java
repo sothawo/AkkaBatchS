@@ -205,17 +205,6 @@ public class Reader extends AkkaBatchActor {
     }
 
     /**
-     * verschickt eine WorkAvailable Nachricht an alle registrierten Worker, wenn es etwas zu tun gibt
-     */
-    private void notifyWorkers() {
-        if (0 < workToBeDone.size()) {
-            for (ActorRef worker : workerList) {
-                worker.tell(workAvailable, getSelf());
-            }
-        }
-    }
-
-    /**
      * registriert den Sender als Worker und gibt ihm evtl. gleich den Hinweis auf Arbeit
      */
     private void registerWorker() {
@@ -247,13 +236,29 @@ public class Reader extends AkkaBatchActor {
     }
 
     /**
+     * verschickt eine WorkAvailable Nachricht an alle registrierten Worker, wenn es etwas zu tun gibt
+     */
+    private void notifyWorkers() {
+        if (0 < workToBeDone.size()) {
+            for (ActorRef worker : workerList) {
+                worker.tell(workAvailable, getSelf());
+            }
+        }
+    }
+
+    /**
      * schickt den nächsten Satz zur Verarbeitung an einen Worker.
      */
     private void sendWork() {
         if (0 < workToBeDone.size()) {
             DoWork doWork = workToBeDone.get(0);
             workToBeDone.remove(0);
-            doWorkInfos.put(doWork.getRecordId(), new DoWorkInfo(doWork));
+
+            Long recordId = doWork.getRecordId();
+            // nur in Map, wenn nicht schon drin
+            if (!doWorkInfos.containsKey(recordId)) {
+                doWorkInfos.put(recordId, new DoWorkInfo(doWork));
+            }
             sender().tell(doWork, getSelf());
         }
     }
