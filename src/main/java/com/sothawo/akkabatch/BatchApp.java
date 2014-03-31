@@ -120,11 +120,6 @@ public class BatchApp {
      */
     private void initReader() {
         reader = system.actorOf(Props.create(Reader.class), configApp.getString("names.reader"));
-        // resend Scheduler starten
-        SendAgain resend = new SendAgain();
-        FiniteDuration intervalResend = Duration.create(configApp.getLong("intervall.resend"), TimeUnit.SECONDS);
-//        system.scheduler().schedule(intervalResend, intervalResend, reader, resend, system.dispatcher(),
-//                                    inbox.getRef());
     }
 
     /**

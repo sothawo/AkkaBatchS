@@ -35,7 +35,18 @@ public class DoWorkInfo {
 
 // --------------------- GETTER / SETTER METHODS ---------------------
 
+    public DoWork getDoWork() {
+        return doWork;
+    }
+
     public long getTimestamp() {
         return timestamp;
+    }
+
+// -------------------------- OTHER METHODS --------------------------
+
+    public void markForResend() {
+        timestamp = System.currentTimeMillis();
+        sendCount++;
     }
 }

@@ -10,6 +10,8 @@ package com.sothawo.akkabatch;
 
 import akka.actor.ActorRef;
 import com.sothawo.akkabatch.messages.*;
+import scala.concurrent.duration.Duration;
+import scala.concurrent.duration.FiniteDuration;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -20,6 +22,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Reader-Aktor.
@@ -67,6 +70,11 @@ public class Reader extends AkkaBatchActor {
 
     /** Map mit Infos zu den aktuellen DoWork Nachrichten */
     private Map<Long, DoWorkInfo> doWorkInfos = new HashMap<>();
+
+    /** die Message zum erneuten Senden */
+    private SendAgain resend;
+    /** Intervall in dem auf resend geprüft wrd */
+    private FiniteDuration intervalResend;
 
 // ------------------------ CANONICAL METHODS ------------------------
 
@@ -120,6 +128,12 @@ public class Reader extends AkkaBatchActor {
         // Fehler zurückmelden
         if (!result) {
             sender().tell(new WorkDone(false), getSelf());
+        } else {
+            // resend Message schedulen
+            resend = new SendAgain();
+            intervalResend = Duration.create(configApp.getLong("intervall.resend"), TimeUnit.MILLISECONDS);
+            getContext().system().scheduler().scheduleOnce(intervalResend, getSelf(), resend, getContext().dispatcher(),
+                                                           null);
         }
     }
 
@@ -187,17 +201,17 @@ public class Reader extends AkkaBatchActor {
                 breakout = true;
             }
         }
-        if (0 < workToBeDone.size()) {
-            notifyWorkers();
-        }
+        notifyWorkers();
     }
 
     /**
-     * verschickt eine WorkAvailable Nachricht an alle registrierten Worker.
+     * verschickt eine WorkAvailable Nachricht an alle registrierten Worker, wenn es etwas zu tun gibt
      */
     private void notifyWorkers() {
-        for (ActorRef worker : workerList) {
-            worker.tell(workAvailable, getSelf());
+        if (0 < workToBeDone.size()) {
+            for (ActorRef worker : workerList) {
+                worker.tell(workAvailable, getSelf());
+            }
         }
     }
 
@@ -216,8 +230,20 @@ public class Reader extends AkkaBatchActor {
      * MessageHandler, versendet die bisher nicht beim Writer angekommenen Nachrichten noch ein mal.
      */
     private void resendMessages() {
-        log.debug("Daten erneut versenden");
-        // TODO: Daten mit Timeout nach workToBeDone verschieben
+        // Daten mit Timeout (doppelte durchschnittliche Zeit) nach workToBeDone verschieben
+        long now = System.currentTimeMillis();
+        long overdue = 2 * averageProcessingTimeMs;
+        for (Map.Entry<Long, DoWorkInfo> entry : doWorkInfos.entrySet()) {
+            DoWorkInfo doWorkInfo = entry.getValue();
+            if ((now - doWorkInfo.getTimestamp()) > overdue) {
+                doWorkInfo.markForResend();
+                workToBeDone.add(doWorkInfo.getDoWork());
+            }
+        }
+        notifyWorkers();
+        // neue Message schedulen
+        getContext().system().scheduler().scheduleOnce(intervalResend, getSelf(), resend, getContext().dispatcher(),
+                                                       null);
     }
 
     /**

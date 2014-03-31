@@ -56,33 +56,38 @@ public class Writer extends AkkaBatchActor {
     /**
      * verarbeitet den nächsten Datensatz.
      *
-     * @param processRecord Datensatz zum Schreiben.
+     * @param processRecord
+     *         Datensatz zum Schreiben.
      */
     private void processRecord(ProcessRecord processRecord) {
         Long recordId = processRecord.getRecordId();
-        reader.tell(new RecordReceived(recordId), getSelf());
-        outputBuffer.put(recordId, processRecord);
+        // wenn die Id schon verarbeitet wurde, ignorieren; kann durch einen resend passieren
+        if (recordId >= nextRecordId) {
+            reader.tell(new RecordReceived(recordId), getSelf());
+            outputBuffer.put(recordId, processRecord);
 
-        long recordsWritten = 0;
-        while (!outputBuffer.isEmpty() && nextRecordId == outputBuffer.firstKey()) {
-            ProcessRecord record = outputBuffer.remove(nextRecordId);
-            writer.println(record.getCsvOriginal());
-            recordsWritten++;
-            nextRecordId++;
-            if (0 == (nextRecordId % 10000)) {
-                log.debug(MessageFormat.format("verarbeitet: {0}", nextRecordId));
+            long recordsWritten = 0;
+            while (!outputBuffer.isEmpty() && nextRecordId == outputBuffer.firstKey()) {
+                ProcessRecord record = outputBuffer.remove(nextRecordId);
+                writer.println(record.getCsvOriginal());
+                recordsWritten++;
+                nextRecordId++;
+                if (0 == (nextRecordId % 10000)) {
+                    log.debug(MessageFormat.format("verarbeitet: {0}", nextRecordId));
+                }
             }
-        }
 
-        if (0 < recordsWritten) {
-            reader.tell(new RecordsWritten(recordsWritten), getSelf());
+            if (0 < recordsWritten) {
+                reader.tell(new RecordsWritten(recordsWritten), getSelf());
+            }
         }
     }
 
     /**
      * Initialisiert den Writer.
      *
-     * @param message die Nachricht
+     * @param message
+     *         die Nachricht
      */
     private void initWriter(InitWriter message) {
         Boolean result = true;
