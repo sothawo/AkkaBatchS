@@ -9,7 +9,6 @@
 package com.sothawo.akkabatch;
 
 import akka.actor.ActorRef;
-import apple.laf.JRSUIUtils;
 import com.sothawo.akkabatch.messages.*;
 import scala.concurrent.duration.Duration;
 import scala.concurrent.duration.FiniteDuration;
@@ -74,8 +73,6 @@ public class Reader extends AkkaBatchActor {
 
     /** die Message zum erneuten Senden */
     private SendAgain resend;
-    /** Intervall in dem auf resend geprüft wrd */
-    private FiniteDuration intervalResend;
 
 // ------------------------ CANONICAL METHODS ------------------------
 
@@ -132,9 +129,11 @@ public class Reader extends AkkaBatchActor {
         } else {
             // resend Message schedulen
             resend = new SendAgain();
-            intervalResend = Duration.create(configApp.getLong("intervall.resend"), TimeUnit.MILLISECONDS);
-            getContext().system().scheduler().scheduleOnce(intervalResend, getSelf(), resend, getContext().dispatcher(),
-                                                           null);
+            // der erste resend nach 500ms, danach passt sich das Systen selber ann
+            getContext().system().scheduler()
+                        .scheduleOnce(Duration.create(500, TimeUnit.MILLISECONDS), getSelf(), resend,
+                                      getContext().dispatcher(),
+                                      null);
         }
     }
 
@@ -227,8 +226,6 @@ public class Reader extends AkkaBatchActor {
      * MessageHandler, versendet die bisher nicht beim Writer angekommenen Nachrichten noch ein mal.
      */
     private void resendMessages() {
-        long resendStart = System.currentTimeMillis();
-        long resendCount = 0;
         // Daten mit Timeout (doppelte durchschnittliche Zeit) nach workToBeDone verschieben
         long now = System.currentTimeMillis();
         long overdueTimestamp = now - (2 * averageProcessingTimeMs);
@@ -237,18 +234,13 @@ public class Reader extends AkkaBatchActor {
             if (doWorkInfo.getTimestamp() <= overdueTimestamp) {
                 doWorkInfo.markResend(now);
                 workToBeDone.put(entry.getKey(), doWorkInfo.getDoWork());
-                resendCount++;
             }
         }
         notifyWorkers();
 
-        long resendEnd = System.currentTimeMillis();
-//        log.debug(MessageFormat.format("resend checking {0} records, resending {1}, duration {2}", doWorkInfos.size(),
-//                                       resendCount, (resendEnd - resendStart)));
-//        log.debug(MessageFormat.format("actNumRecordsInSystem {0}, workToBeDone {1} ", actNumRecordsInSystem,
-//                                       workToBeDone.size()));
         // neue Message schedulen
-        getContext().system().scheduler().scheduleOnce(intervalResend, getSelf(), resend, getContext().dispatcher(),
+        FiniteDuration interval = Duration.create(2 * averageProcessingTimeMs, TimeUnit.MILLISECONDS);
+        getContext().system().scheduler().scheduleOnce(interval, getSelf(), resend, getContext().dispatcher(),
                                                        null);
     }
 
