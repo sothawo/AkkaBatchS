@@ -21,15 +21,15 @@ public class RecordModifier extends AkkaBatchActor {
     /** der Writer */
     private ActorSelection writer;
     /** Ausfallrate */
-    private int dropRate = 0;
+    private int dropRatePerMille = 0;
 
 // ------------------------ CANONICAL METHODS ------------------------
 
     @Override
     public void onReceive(Object message) throws Exception {
         if (message instanceof ProcessRecord) {
-            int randomValue = random.nextInt(100);
-            if(randomValue >= dropRate) {
+            int randomValue = random.nextInt(1000);
+            if(randomValue >= dropRatePerMille) {
                 ProcessRecord in = (ProcessRecord) message;
                 ProcessRecord out = new ProcessRecord(in.getRecordId(), in.getCsvOriginal(),
                                                       Record.processRecord(in.getRecord()));
@@ -44,14 +44,14 @@ public class RecordModifier extends AkkaBatchActor {
     public void preStart() throws Exception {
         super.preStart();
         try {
-            dropRate = configApp.getInt(CONFIG_DROPRATE);
+            dropRatePerMille = configApp.getInt(CONFIG_DROPRATE);
         } catch (ConfigException e) {
             log.error(e, CONFIG_DROPRATE);
         }
 
-        if (0 < dropRate && dropRate < 100) {
+        if (0 < dropRatePerMille && dropRatePerMille < 1000) {
         }
         writer = context().actorSelection(configApp.getString("names.writerRef"));
-        log.debug(MessageFormat.format("sende Daten zu {0}, drop rate: {1}", writer.path(), dropRate));
+        log.debug(MessageFormat.format("sende Daten zu {0}, drop rate: {1} 0/00", writer.path(), dropRatePerMille));
     }
 }

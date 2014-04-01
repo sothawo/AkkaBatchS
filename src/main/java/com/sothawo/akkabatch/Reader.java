@@ -9,6 +9,7 @@
 package com.sothawo.akkabatch;
 
 import akka.actor.ActorRef;
+import apple.laf.JRSUIUtils;
 import com.sothawo.akkabatch.messages.*;
 import scala.concurrent.duration.Duration;
 import scala.concurrent.duration.FiniteDuration;
@@ -18,10 +19,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.MessageFormat;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -44,8 +42,11 @@ public class Reader extends AkkaBatchActor {
     /** Liste mit Workern */
     private final List<ActorRef> workerList = new LinkedList<>();
 
-    /** aktuell zu verarbeitende Daten */
-    private final List<DoWork> workToBeDone = new LinkedList<>();
+    /**
+     * aktuell zu verarbeitende Daten, in Map, damit bei einem resend nicht der gleiche Datensatz mehrfach verschickt
+     * wird, explizit als TreeMap
+     */
+    private final TreeMap<Long, DoWork> workToBeDone = new TreeMap<>();
 
     /** maximale Anzahl gleichzeitg im System befindlicher Datensätze */
     private long maxNumRecordsInSystem;
@@ -145,9 +146,15 @@ public class Reader extends AkkaBatchActor {
      *         enthält die Id des vom Writer empfangenen Datensatzes.
      */
     private void recordReceived(RecordReceived message) {
-        DoWorkInfo doWorkInfo = doWorkInfos.get(message.getId());
+        Long recordId = message.getId();
+        DoWorkInfo doWorkInfo = doWorkInfos.get(recordId);
         if (null != doWorkInfo) {
-            doWorkInfos.remove(message.getId());
+            // muss nicht mehr neu versendet werden
+            doWorkInfos.remove(recordId);
+            // auch die schon für den Versand vorbereiteten Einträge löschen
+            workToBeDone.remove(recordId);
+
+            // Verarbeitungszeit anpassen
             long duration = System.currentTimeMillis() - doWorkInfo.getTimestamp();
             if (0 == averageProcessingTimeMs) {
                 averageProcessingTimeMs = duration;
@@ -187,7 +194,8 @@ public class Reader extends AkkaBatchActor {
         while (null != reader && actNumRecordsInSystem < maxNumRecordsInSystem && !breakout) {
             String line = reader.readLine();
             if (line != null) {
-                workToBeDone.add(new DoWork(recordSerialNo++, line));
+                long recordId = recordSerialNo++;
+                workToBeDone.put(recordId, new DoWork(recordId, line));
                 actNumRecordsInSystem++;
                 numRecordsInInput++;
             } else {
@@ -219,17 +227,26 @@ public class Reader extends AkkaBatchActor {
      * MessageHandler, versendet die bisher nicht beim Writer angekommenen Nachrichten noch ein mal.
      */
     private void resendMessages() {
+        long resendStart = System.currentTimeMillis();
+        long resendCount = 0;
         // Daten mit Timeout (doppelte durchschnittliche Zeit) nach workToBeDone verschieben
         long now = System.currentTimeMillis();
-        long overdue = 2 * averageProcessingTimeMs;
+        long overdueTimestamp = now - (2 * averageProcessingTimeMs);
         for (Map.Entry<Long, DoWorkInfo> entry : doWorkInfos.entrySet()) {
             DoWorkInfo doWorkInfo = entry.getValue();
-            if ((now - doWorkInfo.getTimestamp()) > overdue) {
-                doWorkInfo.markForResend();
-                workToBeDone.add(doWorkInfo.getDoWork());
+            if (doWorkInfo.getTimestamp() <= overdueTimestamp) {
+                doWorkInfo.markResend(now);
+                workToBeDone.put(entry.getKey(), doWorkInfo.getDoWork());
+                resendCount++;
             }
         }
         notifyWorkers();
+
+        long resendEnd = System.currentTimeMillis();
+//        log.debug(MessageFormat.format("resend checking {0} records, resending {1}, duration {2}", doWorkInfos.size(),
+//                                       resendCount, (resendEnd - resendStart)));
+//        log.debug(MessageFormat.format("actNumRecordsInSystem {0}, workToBeDone {1} ", actNumRecordsInSystem,
+//                                       workToBeDone.size()));
         // neue Message schedulen
         getContext().system().scheduler().scheduleOnce(intervalResend, getSelf(), resend, getContext().dispatcher(),
                                                        null);
@@ -251,11 +268,11 @@ public class Reader extends AkkaBatchActor {
      */
     private void sendWork() {
         if (0 < workToBeDone.size()) {
-            DoWork doWork = workToBeDone.get(0);
-            workToBeDone.remove(0);
-
+            DoWork doWork = workToBeDone.firstEntry().getValue();
             Long recordId = doWork.getRecordId();
-            // nur in Map, wenn nicht schon drin
+            workToBeDone.remove(recordId);
+
+            // nur in Info Map, wenn nicht schon drin
             if (!doWorkInfos.containsKey(recordId)) {
                 doWorkInfos.put(recordId, new DoWorkInfo(doWork));
             }

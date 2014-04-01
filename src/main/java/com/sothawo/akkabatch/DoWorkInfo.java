@@ -45,8 +45,13 @@ public class DoWorkInfo {
 
 // -------------------------- OTHER METHODS --------------------------
 
-    public void markForResend() {
-        timestamp = System.currentTimeMillis();
+    /**
+     * setzt den internen Timestamp und erhöht den sendCount Zähler
+     *
+     * @param timestamp
+     */
+    public void markResend(long timestamp) {
+        this.timestamp = timestamp;
         sendCount++;
     }
 }
