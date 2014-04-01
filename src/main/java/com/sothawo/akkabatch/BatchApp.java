@@ -7,12 +7,15 @@ import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.routing.FromConfig;
-import com.sothawo.akkabatch.messages.*;
+import com.sothawo.akkabatch.messages.InitReader;
+import com.sothawo.akkabatch.messages.InitResult;
+import com.sothawo.akkabatch.messages.InitWriter;
+import com.sothawo.akkabatch.messages.WorkDone;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import scala.concurrent.duration.Duration;
-import scala.concurrent.duration.FiniteDuration;
 
+import java.io.File;
 import java.text.MessageFormat;
 import java.util.concurrent.TimeUnit;
 
@@ -69,9 +72,10 @@ public class BatchApp {
     private void run() {
         try {
             System.out.println("#Cores: " + Runtime.getRuntime().availableProcessors());
-            // Konfiguration laden, das macht theoretisch ActorSystem auch, aber so verwenden wir die gleiche
-            // Konfiguration
-            Config configAll = ConfigFactory.load();
+            // Konfiguration aus Datei im Filesystem, nicht im Classpath
+            Config configFile = ConfigFactory.parseFile(new File("akkabatch.conf"));
+            // mit der Standard-Konfiguration "application" aus dem Classpath als Fallback mischen
+            Config configAll = configFile.withFallback(ConfigFactory.load());
             configApp = configAll.getConfig("com.sothawo.akkabatch");
 
             initAkka(configAll);
@@ -89,7 +93,8 @@ public class BatchApp {
                 System.out.println(
                         MessageFormat.format("Verarbeitung {0}, Dauer: {1} ms",
                                              ((WorkDone) msg).getSuccess() ? "OK" : "Fehler",
-                                             endTime - startTime));
+                                             endTime - startTime)
+                );
             } else {
                 throw new AkkaBatchException(
                         MessageFormat.format("unerwartete Nachricht: {0}", msg.getClass().getCanonicalName()));
