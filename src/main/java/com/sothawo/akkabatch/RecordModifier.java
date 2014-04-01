@@ -22,18 +22,26 @@ public class RecordModifier extends AkkaBatchActor {
     private ActorSelection writer;
     /** Ausfallrate */
     private int dropRatePerMille = 0;
+    private long numProcessed;
+    private long numDropped;
 
 // ------------------------ CANONICAL METHODS ------------------------
 
     @Override
     public void onReceive(Object message) throws Exception {
         if (message instanceof ProcessRecord) {
-            int randomValue = random.nextInt(1000);
-            if(randomValue >= dropRatePerMille) {
+            boolean drop = false;
+            if (dropRatePerMille > 0 && random.nextInt(1000) < dropRatePerMille) {
+                drop = true;
+            }
+            if (!drop) {
                 ProcessRecord in = (ProcessRecord) message;
                 ProcessRecord out = new ProcessRecord(in.getRecordId(), in.getCsvOriginal(),
                                                       Record.processRecord(in.getRecord()));
                 writer.tell(out, getSelf());
+                numProcessed++;
+            } else {
+                numDropped++;
             }
         } else {
             unhandled(message);
@@ -49,9 +57,16 @@ public class RecordModifier extends AkkaBatchActor {
             log.error(e, CONFIG_DROPRATE);
         }
 
-        if (0 < dropRatePerMille && dropRatePerMille < 1000) {
-        }
+        numProcessed = 0;
+        numDropped = 0;
+
         writer = context().actorSelection(configApp.getString("names.writerRef"));
-        log.debug(MessageFormat.format("sende Daten zu {0}, drop rate: {1} 0/00", writer.path(), dropRatePerMille));
+        log.debug(MessageFormat.format("sende Daten zu {0}, drop rate: {1} 0/00", writer.pathString(), dropRatePerMille));
+    }
+
+    @Override
+    public void postStop() throws Exception {
+        log.debug(MessageFormat.format("processed: {0}, dropped: {1}", numProcessed, numDropped));
+        super.postStop();
     }
 }

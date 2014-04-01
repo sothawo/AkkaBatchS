@@ -239,7 +239,7 @@ public class Reader extends AkkaBatchActor {
         notifyWorkers();
 
         // neue Message schedulen
-        FiniteDuration interval = Duration.create(2 * averageProcessingTimeMs, TimeUnit.MILLISECONDS);
+        FiniteDuration interval = Duration.create(3 * averageProcessingTimeMs, TimeUnit.MILLISECONDS);
         getContext().system().scheduler().scheduleOnce(interval, getSelf(), resend, getContext().dispatcher(),
                                                        null);
     }

@@ -56,10 +56,10 @@ public class CSV2Record extends AkkaBatchActor {
         super.preStart();
 
         ActorSelection reader = getContext().actorSelection(configApp.getString("names.readerRef"));
-        log.debug(MessageFormat.format("hole Daten von {0}", reader.path()));
+        log.debug(MessageFormat.format("hole Daten von {0}", reader.pathString()));
         reader.tell(new Register(), getSelf());
 
         recordModifier = getContext().actorSelection(configApp.getString("names.recordModifierRef"));
-        log.debug(MessageFormat.format("Sende  Daten zu {0}", recordModifier.path()));
+        log.debug(MessageFormat.format("Sende  Daten zu {0}", recordModifier.pathString()));
     }
 }

@@ -3,5 +3,6 @@
 .eclipse
 target
 
-
 data/*.csv
+
+.DS_Store
