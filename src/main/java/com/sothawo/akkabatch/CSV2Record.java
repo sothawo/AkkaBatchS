@@ -9,9 +9,12 @@
 package com.sothawo.akkabatch;
 
 import akka.actor.ActorSelection;
+import akka.actor.Cancellable;
 import com.sothawo.akkabatch.messages.*;
+import scala.concurrent.duration.Duration;
 
 import java.text.MessageFormat;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Aktor zum Erzeugen eines Record aus einer csv Zeile.
@@ -21,10 +24,17 @@ import java.text.MessageFormat;
 public class CSV2Record extends AkkaBatchActor {
 // ------------------------------ FIELDS ------------------------------
 
+    protected static final String REGISTER = "register";
     /** der Aktor für den nächsten Schritt */
     private ActorSelection recordModifier;
+    /** Register Message */
+    private final Register register = new Register();
     /** GetWork Message */
     private final GetWork getWork = new GetWork();
+    /** der Reader, bei dem Daten abgerufen werden */
+    private ActorSelection reader;
+    /** Scheduled Objekt für die Registrierung */
+    private Cancellable registerSchedule = null;
 
 // ------------------------ CANONICAL METHODS ------------------------
 
@@ -34,6 +44,8 @@ public class CSV2Record extends AkkaBatchActor {
             doWork((DoWork) message);
         } else if (message instanceof WorkAvailable) {
             sender().tell(getWork, getSelf());
+        } else if (message.equals(REGISTER)) {
+            reader.tell(register, getSelf());
         } else {
             unhandled(message);
         }
@@ -46,18 +58,39 @@ public class CSV2Record extends AkkaBatchActor {
      *         zu verarbeitende Daten
      */
     private void doWork(DoWork doWork) {
+        // in Record umwandeln und weiterschicken
         recordModifier.tell(new ProcessRecord(doWork.getRecordId(), doWork.getCsvOriginal(),
                                               Record.fromLine(doWork.getCsvOriginal())), getSelf());
+        // neue Arbeit anfordern
         sender().tell(getWork, getSelf());
+    }
+
+    @Override
+    public void postStop() throws Exception {
+        if (null != registerSchedule) {
+            registerSchedule.cancel();
+            registerSchedule = null;
+        }
+        super.postStop();
     }
 
     @Override
     public void preStart() throws Exception {
         super.preStart();
 
-        ActorSelection reader = getContext().actorSelection(configApp.getString("names.readerRef"));
-        reader.tell(new Register(), getSelf());
+        reader = getContext().actorSelection(configApp.getString("names.readerRef"));
 
+        // zyklische Nachricht an das eigene Objekt mit einem String, um sich beim Reader zu registrieren
+        // schöner wäre, den Scheduler gleich an den Reader schicken zu lassen, aber das ist mit einer ActorSelection
+        // nicht möglich.
+        registerSchedule = getContext().system().scheduler().schedule(Duration.create(0, TimeUnit.SECONDS),
+                                                                      Duration.create(configApp
+                                                                                              .getInt("times.registerIntervall"),
+                                                                                      TimeUnit.SECONDS
+                                                                      ), getSelf(),
+                                                                      REGISTER,
+                                                                      getContext().dispatcher(), getSelf()
+        );
         recordModifier = getContext().actorSelection(configApp.getString("names.recordModifierRef"));
         log.info(MessageFormat.format("hole Daten von {0}, sende Daten zu {1}", reader.pathString(),
                                       recordModifier.pathString()));

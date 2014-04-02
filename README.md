@@ -37,7 +37,8 @@ wenn ein Datensatz zu lange in der Verarbeitung bleibt.
 
 ### eingehende Nachrichten
 
-- Register wird von einem CSV2Record gesendet um sich zu registrieren
+- Register wird von einem CSV2Record gesendet um sich zu registrieren. Diese Nachricht muss zyklisch gesendet werden,
+ da der Reader registrierte CSV2Record Aktoren, die sich nicht regelmässig melden, aus seiner internen Liste entfernt.
 - InitReader enthält den Namen der zu verarbeitenden Datei und wird zum Beginn der Verarbeitung von Inbox gesendet.
 - GetWork wird von einem CSV2Record gesendet, wenn dieser einen Datensatz verarbeiten kann.
 - RecordReceived, enthält eine Record-ID und wird vom Writer gesendet, wenn dieser den entsprechenden Datensatz
@@ -92,7 +93,7 @@ wenn Daten zur Verarbeitung vorhanden sind.
  mit GetWork gemeldet hat
 
 ### ausgehende Nachrichten
-- Register (enthält die Kennung des CSV2Record), wird am Anfang an den Reader gesendet,
+- Register (enthält die Kennung des CSV2Record), wird in zyklischen Abständen an den Reader gesendet,
 um sich bei diesem zu registrieren.
 - GetWork, wird an den Reader gesendet, wenn der Actor bereit ist zum Arbeiten. Dies ist der Fall nach der
 Verarbeitung eines vorhergegangene Record oder wenn der Actor die Nachricht WorkAvailable empfangen hat.

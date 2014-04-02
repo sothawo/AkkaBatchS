@@ -9,6 +9,7 @@
 package com.sothawo.akkabatch;
 
 import akka.actor.ActorRef;
+import akka.actor.Cancellable;
 import com.sothawo.akkabatch.messages.*;
 import scala.concurrent.duration.Duration;
 import scala.concurrent.duration.FiniteDuration;
@@ -18,7 +19,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -29,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 public class Reader extends AkkaBatchActor {
 // ------------------------------ FIELDS ------------------------------
 
+    protected static final String CLEANUP_WORKERS = "cleanupWorkers";
     /** die Inbox des Systems, für die letzte Meldung am Schluss */
     private ActorRef inbox;
 
@@ -38,8 +42,8 @@ public class Reader extends AkkaBatchActor {
     /** eine Instanz der Nachricht reicht */
     private WorkAvailable workAvailable;
 
-    /** Liste mit Workern */
-    private final List<ActorRef> workerList = new LinkedList<>();
+    /** Zuordnung registrierte Worke -> Timestamp der registrierung */
+    private final Map<ActorRef, Long> workers = new HashMap<>();
 
     /**
      * aktuell zu verarbeitende Daten, in Map, damit bei einem resend nicht der gleiche Datensatz mehrfach verschickt
@@ -73,6 +77,8 @@ public class Reader extends AkkaBatchActor {
 
     /** die Message zum erneuten Senden */
     private SendAgain resend;
+    /** Schedule um Worker aufzuräumen */
+    private Cancellable cleanupWorkersSchedule;
 
 // ------------------------ CANONICAL METHODS ------------------------
 
@@ -90,9 +96,29 @@ public class Reader extends AkkaBatchActor {
             recordReceived((RecordReceived) message);
         } else if (message instanceof RecordsWritten) {
             recordsWritten((RecordsWritten) message);
+        } else if (message.equals(CLEANUP_WORKERS)) {
+            cleanupWorkers();
         } else {
             unhandled(message);
         }
+    }
+
+    /**
+     * entfernt Worker, sie sich nicht rechtzeitig neu registriert haben aus der workers Map
+     */
+    private void cleanupWorkers() {
+        Map<ActorRef, Long> cleanWorkers = new HashMap<>();
+        // veraltet ist 2 mal registerIntervall, Umrechnung in ms
+        long staleTimestamp = System.currentTimeMillis() - (2000 * configApp.getInt("times.registerIntervall"));
+        for (Map.Entry<ActorRef, Long> entry : workers.entrySet()) {
+            if (entry.getValue() > staleTimestamp) {
+                cleanWorkers.put(entry.getKey(), entry.getValue());
+            } else {
+                log.debug("remove worker " + entry.getKey().path());
+            }
+        }
+        workers.clear();
+        workers.putAll(cleanWorkers);
     }
 
     /**
@@ -215,10 +241,13 @@ public class Reader extends AkkaBatchActor {
      * registriert den Sender als Worker und gibt ihm evtl. gleich den Hinweis auf Arbeit
      */
     private void registerWorker() {
-        workerList.add(sender());
-        log.info("Registrierung von " + sender().path());
+        ActorRef worker = sender();
+        if (!workers.containsKey(worker)) {
+            log.info("Neuregistrierung von " + worker.path());
+        }
+        workers.put(worker, System.currentTimeMillis());
         if (0 < workToBeDone.size()) {
-            sender().tell(workAvailable, getSelf());
+            worker.tell(workAvailable, getSelf());
         }
     }
 
@@ -249,7 +278,7 @@ public class Reader extends AkkaBatchActor {
      */
     private void notifyWorkers() {
         if (0 < workToBeDone.size()) {
-            for (ActorRef worker : workerList) {
+            for (ActorRef worker : workers.keySet()) {
                 worker.tell(workAvailable, getSelf());
             }
         }
@@ -270,5 +299,29 @@ public class Reader extends AkkaBatchActor {
             }
             sender().tell(doWork, getSelf());
         }
+    }
+
+    @Override
+    public void postStop() throws Exception {
+        if (null != cleanupWorkersSchedule) {
+            cleanupWorkersSchedule.cancel();
+            cleanupWorkersSchedule = null;
+        }
+        super.postStop();
+    }
+
+    @Override
+    public void preStart() throws Exception {
+        super.preStart();
+        // zyklische Nachricht an das eigene Objekt mit einem String, um sich veraltete Worker aufzuräumen,
+        // hier reicht ein String
+        cleanupWorkersSchedule = getContext().system().scheduler().schedule(Duration.create(0, TimeUnit.SECONDS),
+                                                                            Duration.create(2 * configApp
+                                                                                                    .getInt("times.registerIntervall"),
+                                                                                            TimeUnit.SECONDS
+                                                                            ), getSelf(),
+                                                                            CLEANUP_WORKERS,
+                                                                            getContext().dispatcher(), getSelf()
+        );
     }
 }
