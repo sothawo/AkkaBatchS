@@ -61,7 +61,7 @@ public class RecordModifier extends AkkaBatchActor {
         numDropped = 0;
 
         writer = context().actorSelection(configApp.getString("names.writerRef"));
-        log.debug(MessageFormat.format("sende Daten zu {0}, drop rate: {1} 0/00", writer.pathString(), dropRatePerMille));
+        log.info(MessageFormat.format("sende Daten zu {0}, drop rate: {1} 0/00", writer.pathString(), dropRatePerMille));
     }
 
     @Override

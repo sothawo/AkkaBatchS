@@ -118,6 +118,6 @@ public class Writer extends AkkaBatchActor {
     public void preStart() throws Exception {
         super.preStart();
         reader = getContext().actorSelection(configApp.getString("names.readerRef"));
-        log.debug(MessageFormat.format("sende Infos an {0}", reader.path()));
+        log.debug(MessageFormat.format("sende Infos an {0}", reader.pathString()));
     }
 }
