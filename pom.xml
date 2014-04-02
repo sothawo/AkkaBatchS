@@ -16,8 +16,11 @@
         <maven.build.timestamp.format>yyyyMMdd-HHmm</maven.build.timestamp.format>
         <buildTimestamp>${maven.build.timestamp}</buildTimestamp>
 
+        <appassembler.dir>AkkaBatch</appassembler.dir>
+
         <version.akka>2.3.0</version.akka>
         <version.typesafe.config>1.2.0</version.typesafe.config>
+        <version.commons.lang>3.3</version.commons.lang>
     </properties>
 
     <!-- build Einstellungen für alle Module -->
@@ -31,6 +34,37 @@
                 <configuration>
                     <source>1.7</source>
                     <target>1.7</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>appassembler-maven-plugin</artifactId>
+                <version>1.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>assemble</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <assembleDirectory>${project.build.directory}/${appassembler.dir}</assembleDirectory>
+                    <copyConfigurationDirectory>true</copyConfigurationDirectory>
+                    <repositoryLayout>flat</repositoryLayout>
+                    <repositoryName>lib</repositoryName>
+                    <programs>
+                        <program>
+                            <mainClass>com.sothawo.akkabatch.BatchApp</mainClass>
+                            <!--
+                            <commandLineArguments>
+                                <commandLineArgument>-cfg</commandLineArgument>
+                                <commandLineArgument>etc/config.properties</commandLineArgument>
+                            </commandLineArguments>
+                            -->
+                            <name>AkkaBatch</name>
+                        </program>
+                    </programs>
                 </configuration>
             </plugin>
         </plugins>
@@ -50,7 +84,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.3</version>
+            <version>${version.commons.lang}</version>
         </dependency>
     </dependencies>
 
