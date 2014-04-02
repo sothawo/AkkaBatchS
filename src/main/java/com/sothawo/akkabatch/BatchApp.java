@@ -29,6 +29,8 @@ public class BatchApp {
 
     /** Logger */
     protected LoggingAdapter log;
+    /** Name der Konfigurationsdatei */
+    private final String configFileName;
     /** Name der Eingabedatei */
     private final String infileName;
     /** Name der Ausgabedatei */
@@ -49,11 +51,12 @@ public class BatchApp {
      *         Programmargumente
      */
     public BatchApp(String[] args) {
-        if (null == args || args.length < 2) {
-            throw new IllegalArgumentException("falsche Anzahl Parameter");
+        if (null == args || args.length < 3) {
+            throw new IllegalArgumentException("falscher Aufruf; Parameter: <config> <infile> <outfile>");
         }
-        infileName = args[0];
-        outfileName = args[1];
+        configFileName = args[0];
+        infileName = args[1];
+        outfileName = args[2];
     }
 
 // --------------------------- main() method ---------------------------
@@ -73,7 +76,7 @@ public class BatchApp {
         try {
             System.out.println("#Cores: " + Runtime.getRuntime().availableProcessors());
             // Konfiguration aus Datei im Filesystem, nicht im Classpath
-            Config configFile = ConfigFactory.parseFile(new File("akkabatch.conf"));
+            Config configFile = ConfigFactory.parseFile(new File(configFileName));
             // mit der Standard-Konfiguration "application" aus dem Classpath als Fallback mischen
             Config configAll = configFile.withFallback(ConfigFactory.load());
             configApp = configAll.getConfig("com.sothawo.akkabatch");
@@ -109,7 +112,7 @@ public class BatchApp {
     }
 
     /**
-     * Initialisiert das Akka System.
+     * Initialisiert das Akka System und den Logger.
      *
      * @param config
      *         KOnfigurationsobjekt.

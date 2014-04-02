@@ -56,12 +56,9 @@
                     <programs>
                         <program>
                             <mainClass>com.sothawo.akkabatch.BatchApp</mainClass>
-                            <!--
                             <commandLineArguments>
-                                <commandLineArgument>-cfg</commandLineArgument>
-                                <commandLineArgument>etc/config.properties</commandLineArgument>
+                                <commandLineArgument>"$BASEDIR"/etc/akkabatch.conf</commandLineArgument>
                             </commandLineArguments>
-                            -->
                             <name>AkkaBatch</name>
                         </program>
                     </programs>
