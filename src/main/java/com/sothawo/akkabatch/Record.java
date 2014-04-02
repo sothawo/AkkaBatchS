@@ -1,26 +1,22 @@
 package com.sothawo.akkabatch;
 
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.Random;
+import java.io.Serializable;
 
 /**
  * Datensatz.
  */
-public final class Record {
+public final class Record implements Serializable {
 // ------------------------------ FIELDS ------------------------------
 
     private String id;
     private String sex;
-    private String lastname;
     private String firstname;
+    private String lastname;
     private String zip;
     private String city;
     private String district;
     private String street;
     private String number;
-
-    private static Random rand = new Random();
 
 // -------------------------- STATIC METHODS --------------------------
 
@@ -32,43 +28,23 @@ public final class Record {
         if (fields.length != 10) {
             throw new IllegalArgumentException("ungültige Daten: " + line);
         }
-        Record record = new Record();
-        record.id = fields[0];
-        record.sex = fields[1];
-        record.firstname = fields[2];
-        record.lastname = fields[3];
-        record.zip = fields[4];
-        record.city = fields[5];
-        record.district = fields[6];
-        record.street = fields[7];
-        record.number = fields[8] + fields[9];
-        return record;
+        return new Record(fields[0], fields[1], fields[2], fields[3], fields[4], fields[5], fields[6], fields[7],
+                   fields[8] + fields[9]);
     }
 
-    public static Record processRecord(final Record origin) {
-        if (null == origin) {
-            throw new IllegalArgumentException("null input");
-        }
-        Record record = new Record();
-        record.id = origin.id;
-        record.sex = origin.sex;
-        record.firstname = StringUtils.upperCase(origin.firstname);
-        record.lastname = StringUtils.upperCase(origin.lastname);
-        record.zip = origin.zip;
-        record.city = StringUtils.upperCase(origin.city);
-        record.district = StringUtils.upperCase(origin.district);
-        record.street = StringUtils.upperCase(origin.street);
-        record.number = StringUtils.upperCase(origin.number);
-        if (0 == (rand.nextInt() % 2)) {
-            try {
-                Thread.sleep(1);
-            } catch (InterruptedException ignored) {
-                System.err.println("oops, interrupted");
-            }
-        } else {
-            Fibonacci.calculate(1000);
-        }
-        return record;
+// --------------------------- CONSTRUCTORS ---------------------------
+
+    public Record(String id, String sex, String firstname, String lastname, String zip, String city,
+                  String district, String street, String number) {
+        this.id = id;
+        this.sex = sex;
+        this.firstname = firstname;
+        this.lastname = lastname;
+        this.zip = zip;
+        this.city = city;
+        this.district = district;
+        this.street = street;
+        this.number = number;
     }
 
 // --------------------- GETTER / SETTER METHODS ---------------------

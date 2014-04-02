@@ -13,6 +13,8 @@ import com.sothawo.akkabatch.messages.InitWriter;
 import com.sothawo.akkabatch.messages.WorkDone;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigParseOptions;
+import com.typesafe.config.ConfigResolveOptions;
 import scala.concurrent.duration.Duration;
 
 import java.io.File;
@@ -81,8 +83,14 @@ public class BatchApp {
             System.out.println("#Cores: " + Runtime.getRuntime().availableProcessors());
             // Konfiguration aus Datei im Filesystem, nicht im Classpath
             Config configFile = ConfigFactory.parseFile(new File(configFileName));
-            // mit der Standard-Konfiguration "application" aus dem Classpath als Fallback mischen
-            Config configAll = configFile.withFallback(ConfigFactory.load());
+
+            // application Konfiguration aus dem Classpath ohne resolving, das kommt nach dem merge
+            ConfigParseOptions parseOptions = ConfigParseOptions.defaults();
+            ConfigResolveOptions resolveOptions = ConfigResolveOptions.defaults().setAllowUnresolved(true);
+            Config configAll = ConfigFactory.load("application", parseOptions, resolveOptions);
+            // merge und dann resolve
+            configAll = configFile.withFallback(configAll).resolve();
+
             configApp = configAll.getConfig("com.sothawo.akkabatch");
 
             initAkka(configAll);

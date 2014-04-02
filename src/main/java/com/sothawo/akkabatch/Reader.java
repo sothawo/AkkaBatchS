@@ -54,6 +54,9 @@ public class Reader extends AkkaBatchActor {
     /** maximale Anzahl gleichzeitg im System befindlicher Datensätze */
     private long maxNumRecordsInSystem;
 
+    /** Anzahl Sätze im System, die unterschritten werden müssen, um ein Füllen auszulösen */
+    private long fillLevel;
+
     /** aktuelle Anzahl gleichzeitig im System befindlicher Datensätze */
     private long actNumRecordsInSystem;
 
@@ -77,6 +80,7 @@ public class Reader extends AkkaBatchActor {
 
     /** die Message zum erneuten Senden */
     private SendAgain resend;
+
     /** Schedule um Worker aufzuräumen */
     private Cancellable cleanupWorkersSchedule;
 
@@ -108,8 +112,8 @@ public class Reader extends AkkaBatchActor {
      */
     private void cleanupWorkers() {
         Map<ActorRef, Long> cleanWorkers = new HashMap<>();
-        // veraltet ist 2 mal registerIntervall, Umrechnung in ms
-        long staleTimestamp = System.currentTimeMillis() - (2000 * configApp.getInt("times.registerIntervall"));
+        // veraltet ist 5 mal registerIntervall, Umrechnung in ms
+        long staleTimestamp = System.currentTimeMillis() - (5000 * configApp.getInt("times.registerIntervall"));
         for (Map.Entry<ActorRef, Long> entry : workers.entrySet()) {
             if (entry.getValue() > staleTimestamp) {
                 cleanWorkers.put(entry.getKey(), entry.getValue());
@@ -131,6 +135,7 @@ public class Reader extends AkkaBatchActor {
         inbox = sender();
         workAvailable = new WorkAvailable();
         maxNumRecordsInSystem = configApp.getLong("numRecords.inSystem");
+         fillLevel = (maxNumRecordsInSystem * 9) / 10;
         workToBeDone.clear();
         actNumRecordsInSystem = 0;
         recordSerialNo = 1;
@@ -215,6 +220,11 @@ public class Reader extends AkkaBatchActor {
      * füllt den Puffer der zu verarbeitenden Daten und benachrichtigt die Worker, dass Arbeit da ist.
      */
     private void fillWorkToBeDone() throws IOException {
+        // nur füllen, wenn weniger als 90% der erlaubten Menge im System sind, sonst wird wegen einzelner reads
+        // ein notifyWorkers angestossen
+        if(actNumRecordsInSystem >= fillLevel) {
+            return;
+        }
         boolean breakout = false;
         while (null != reader && actNumRecordsInSystem < maxNumRecordsInSystem && !breakout) {
             String line = reader.readLine();
@@ -268,7 +278,8 @@ public class Reader extends AkkaBatchActor {
         notifyWorkers();
 
         // neue Message schedulen
-        FiniteDuration interval = Duration.create(3 * averageProcessingTimeMs, TimeUnit.MILLISECONDS);
+        FiniteDuration interval = Duration.create((0 == averageProcessingTimeMs) ? 500 : (3 * averageProcessingTimeMs),
+                                                  TimeUnit.MILLISECONDS);
         getContext().system().scheduler().scheduleOnce(interval, getSelf(), resend, getContext().dispatcher(),
                                                        null);
     }
@@ -316,7 +327,7 @@ public class Reader extends AkkaBatchActor {
         // zyklische Nachricht an das eigene Objekt mit einem String, um sich veraltete Worker aufzuräumen,
         // hier reicht ein String
         cleanupWorkersSchedule = getContext().system().scheduler().schedule(Duration.create(0, TimeUnit.SECONDS),
-                                                                            Duration.create(2 * configApp
+                                                                            Duration.create(20 * configApp
                                                                                                     .getInt("times.registerIntervall"),
                                                                                             TimeUnit.SECONDS
                                                                             ), getSelf(),

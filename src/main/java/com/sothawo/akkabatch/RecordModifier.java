@@ -37,7 +37,7 @@ public class RecordModifier extends AkkaBatchActor {
             if (!drop) {
                 ProcessRecord in = (ProcessRecord) message;
                 ProcessRecord out = new ProcessRecord(in.getRecordId(), in.getCsvOriginal(),
-                                                      Record.processRecord(in.getRecord()));
+                                                      RecordProcessor.processRecord(in.getRecord()));
                 writer.tell(out, getSelf());
                 numProcessed++;
             } else {
@@ -60,7 +60,10 @@ public class RecordModifier extends AkkaBatchActor {
         numProcessed = 0;
         numDropped = 0;
 
-        writer = context().actorSelection(configApp.getString("names.writerRef"));
+        // Writer ist im Master
+        String writerPath = configApp.getString("network.master.address") + configApp.getString("names.writerRef");
+        log.info("Writer Path aus Konfiguration: " + writerPath);
+        writer = context().actorSelection(writerPath);
         log.info(MessageFormat.format("sende Daten zu {0}, drop rate: {1} 0/00", writer.pathString(), dropRatePerMille));
     }
 

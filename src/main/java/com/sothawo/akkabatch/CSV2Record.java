@@ -78,7 +78,15 @@ public class CSV2Record extends AkkaBatchActor {
     public void preStart() throws Exception {
         super.preStart();
 
-        reader = getContext().actorSelection(configApp.getString("names.readerRef"));
+        // Reader ist im Master
+        String readerPath = configApp.getString("network.master.address") + configApp.getString("names.readerRef");
+        log.info("Reader Path aus Konfiguration: " + readerPath);
+        reader = getContext().actorSelection(readerPath);
+
+        // recordModifier ist wie dieser Aktor im Worker
+        recordModifier = getContext().actorSelection(configApp.getString("names.recordModifierRef"));
+        log.info(MessageFormat.format("hole Daten von {0}, sende Daten zu {1}", reader.pathString(),
+                                      recordModifier.pathString()));
 
         // zyklische Nachricht an das eigene Objekt mit einem String, um sich beim Reader zu registrieren
         // schöner wäre, den Scheduler gleich an den Reader schicken zu lassen, aber das ist mit einer ActorSelection
@@ -91,8 +99,5 @@ public class CSV2Record extends AkkaBatchActor {
                                                                       REGISTER,
                                                                       getContext().dispatcher(), getSelf()
         );
-        recordModifier = getContext().actorSelection(configApp.getString("names.recordModifierRef"));
-        log.info(MessageFormat.format("hole Daten von {0}, sende Daten zu {1}", reader.pathString(),
-                                      recordModifier.pathString()));
     }
 }
