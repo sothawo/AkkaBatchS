@@ -32,9 +32,9 @@ public class BatchApp {
     /** Name der Konfigurationsdatei */
     private final String configFileName;
     /** Name der Eingabedatei */
-    private final String infileName;
+    private String infileName = "not_specified";
     /** Name der Ausgabedatei */
-    private final String outfileName;
+    private String outfileName = "not_specified";
     /** Konfiguration der Applikation */
     private Config configApp;
     /** das Aktorensystem */
@@ -51,12 +51,16 @@ public class BatchApp {
      *         Programmargumente
      */
     public BatchApp(String[] args) {
-        if (null == args || args.length < 3) {
-            throw new IllegalArgumentException("falscher Aufruf; Parameter: <config> <infile> <outfile>");
+        if (null == args || args.length < 1) {
+            throw new IllegalArgumentException("falscher Aufruf; Parameter: <config> [<infile> <outfile>]");
         }
         configFileName = args[0];
-        infileName = args[1];
-        outfileName = args[2];
+        if (args.length > 1) {
+            infileName = args[1];
+        }
+        if (args.length > 2) {
+            outfileName = args[2];
+        }
     }
 
 // --------------------------- main() method ---------------------------
@@ -82,26 +86,25 @@ public class BatchApp {
             configApp = configAll.getConfig("com.sothawo.akkabatch");
 
             initAkka(configAll);
-            initReader();
-            initWriter();
-            initWorkers();
 
-            // Verarbeitung durch Nachricht an den Reader starten
-            long startTime = System.currentTimeMillis();
-            inbox.send(reader, new InitReader(infileName, configApp.getString("charset.infile")));
-            // auf WorkDone warten
-            Object msg = inbox.receive(Duration.create(configApp.getLong("times.maxRunDuration"), TimeUnit.SECONDS));
-            long endTime = System.currentTimeMillis();
-            if (msg instanceof WorkDone) {
-                System.out.println(
-                        MessageFormat.format("Verarbeitung {0}, Dauer: {1} ms",
-                                             ((WorkDone) msg).getSuccess() ? "OK" : "Fehler",
-                                             endTime - startTime)
-                );
-            } else {
-                throw new AkkaBatchException(
-                        MessageFormat.format("unerwartete Nachricht: {0}", msg.getClass().getCanonicalName()));
+            boolean runMaster = configApp.getBoolean("modules.master");
+            boolean runWorker = configApp.getBoolean("modules.worker");
+            log.info(MessageFormat.format("master: {0}, worker: {1}", runMaster, runWorker));
+
+            if (runMaster) {
+                initReader();
+                initWriter();
             }
+            if (runWorker) {
+                initWorkers();
+            }
+
+            if (runMaster) {
+                log.debug("Starte Verarbeitung...");
+                // Verarbeitung durch Nachricht an den Reader starten
+                inbox.send(reader, new InitReader(infileName, configApp.getString("charset.infile")));
+            }
+            waitForWorkDone();
         } catch (AkkaBatchException e) {
             e.printStackTrace();
         } finally {
@@ -156,6 +159,30 @@ public class BatchApp {
             }
         } else {
             throw new AkkaBatchException("unbekannte Antwort");
+        }
+        log.info("Writer-Intialisierung fertig.");
+    }
+
+    /**
+     * wartet dass die Verarbeitung abgeschlossen ist
+     *
+     * @throws AkkaBatchException
+     */
+    private void waitForWorkDone() throws AkkaBatchException {
+        long startTime = System.currentTimeMillis();
+        // auf WorkDone warten
+        Object msg =
+                inbox.receive(Duration.create(configApp.getLong("times.maxRunDuration"), TimeUnit.SECONDS));
+        long endTime = System.currentTimeMillis();
+        if (msg instanceof WorkDone) {
+            System.out.println(
+                    MessageFormat.format("Verarbeitung {0}, Dauer: {1} ms",
+                                         ((WorkDone) msg).getSuccess() ? "OK" : "Fehler",
+                                         endTime - startTime)
+            );
+        } else {
+            throw new AkkaBatchException(
+                    MessageFormat.format("unerwartete Nachricht: {0}", msg.getClass().getCanonicalName()));
         }
     }
 }
