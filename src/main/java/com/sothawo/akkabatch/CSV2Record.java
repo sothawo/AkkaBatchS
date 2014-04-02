@@ -61,6 +61,8 @@ public class CSV2Record extends AkkaBatchActor {
         // in Record umwandeln und weiterschicken
         recordModifier.tell(new ProcessRecord(doWork.getRecordId(), doWork.getCsvOriginal(),
                                               Record.fromLine(doWork.getCsvOriginal())), getSelf());
+        // etwas Zeit verbraten
+        RecordProcessor.useTime();
         // neue Arbeit anfordern
         sender().tell(getWork, getSelf());
     }

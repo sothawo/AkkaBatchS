@@ -20,15 +20,22 @@ public final class RecordProcessor {
                 new Record(origin.getId(), origin.getSex(), origin.getFirstname(), origin.getLastname(),
                            origin.getZip(), origin.getCity(), origin.getDistrict(), origin.getStreet(),
                            origin.getNumber());
+        useTime();
+        return record;
+    }
+
+    /**
+     * verbraucht Zeit
+     */
+    public static void useTime() {
         if (0 == (rand.nextInt() % 2)) {
             try {
-                Thread.sleep(20);
+                Thread.sleep(10);
             } catch (InterruptedException ignored) {
                 System.err.println("oops, interrupted");
             }
         } else {
-            Fibonacci.calculate(15000);
+            Fibonacci.calculate(10000);
         }
-        return record;
     }
 }
