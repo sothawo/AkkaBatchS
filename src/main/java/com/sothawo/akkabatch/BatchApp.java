@@ -81,19 +81,14 @@ public class BatchApp {
     private void run() {
         try {
             System.out.println("#Cores: " + Runtime.getRuntime().availableProcessors());
-            // Konfiguration aus Datei im Filesystem, nicht im Classpath
-            Config configFile = ConfigFactory.parseFile(new File(configFileName));
-
-            // application Konfiguration aus dem Classpath ohne resolving, das kommt nach dem merge
-            ConfigParseOptions parseOptions = ConfigParseOptions.defaults();
-            ConfigResolveOptions resolveOptions = ConfigResolveOptions.defaults().setAllowUnresolved(true);
-            Config configAll = ConfigFactory.load("application", parseOptions, resolveOptions);
-            // merge und dann resolve
-            configAll = configFile.withFallback(configAll).resolve();
-
-            configApp = configAll.getConfig("com.sothawo.akkabatch");
+            Config configAll = getConfig();
 
             initAkka(configAll);
+
+            RecordProcessor.fibonacci = configApp.getInt("simulation.fibonacci");
+            RecordProcessor.threadsleep = configApp.getInt("simulation.threadsleep");
+            log.info(MessageFormat.format("Simulation: Fibonacci {0}, ThreadSleep {1}", RecordProcessor.fibonacci,
+                                          RecordProcessor.threadsleep));
 
             boolean runMaster = configApp.getBoolean("modules.master");
             boolean runWorker = configApp.getBoolean("modules.worker");
@@ -120,6 +115,26 @@ public class BatchApp {
                 system.shutdown();
             }
         }
+    }
+
+    /**
+     * liest die Konfiguration ein
+     *
+     * @return KOnfiguration
+     */
+    private Config getConfig() {
+        // Konfiguration aus Datei im Filesystem, nicht im Classpath
+        Config configFile = ConfigFactory.parseFile(new File(configFileName));
+
+        // application Konfiguration aus dem Classpath ohne resolving, das kommt nach dem merge
+        ConfigParseOptions parseOptions = ConfigParseOptions.defaults();
+        ConfigResolveOptions resolveOptions = ConfigResolveOptions.defaults().setAllowUnresolved(true);
+        Config configAll = ConfigFactory.load("application", parseOptions, resolveOptions);
+        // merge und dann resolve
+        configAll = configFile.withFallback(configAll).resolve();
+
+        configApp = configAll.getConfig("com.sothawo.akkabatch");
+        return configAll;
     }
 
     /**

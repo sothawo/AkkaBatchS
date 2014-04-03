@@ -8,6 +8,8 @@ import java.util.Random;
 public final class RecordProcessor {
 // ------------------------------ FIELDS ------------------------------
 
+    public static int fibonacci = 1000;
+    public static int threadsleep = 10;
     private static Random rand = new Random();
 
 // -------------------------- STATIC METHODS --------------------------
@@ -30,12 +32,12 @@ public final class RecordProcessor {
     public static void useTime() {
         if (0 == (rand.nextInt() % 2)) {
             try {
-                Thread.sleep(10);
+                Thread.sleep(threadsleep);
             } catch (InterruptedException ignored) {
                 System.err.println("oops, interrupted");
             }
         } else {
-            Fibonacci.calculate(10000);
+            Fibonacci.calculate(fibonacci);
         }
     }
 }
