@@ -193,6 +193,9 @@ public class Reader extends AkkaBatchActor {
                 averageProcessingTimeMs =
                         ((averageProcessingTimeMs * numRecordsProcessed) + duration) / (numRecordsProcessed + 1);
             }
+            if(1 > averageProcessingTimeMs) {
+                averageProcessingTimeMs = 1;
+            }
             numRecordsProcessed++;
         }
     }
