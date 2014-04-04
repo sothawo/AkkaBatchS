@@ -42,7 +42,7 @@ public class Reader extends AkkaBatchActor {
     /** eine Instanz der Nachricht reicht */
     private WorkAvailable workAvailable;
 
-    /** Zuordnung registrierte Worke -> Timestamp der registrierung */
+    /** Zuordnung registrierte Worker -> Timestamp der registrierung */
     private final Map<ActorRef, Long> workers = new HashMap<>();
 
     /**
