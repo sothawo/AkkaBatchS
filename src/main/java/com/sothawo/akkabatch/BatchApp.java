@@ -22,7 +22,7 @@ import java.text.MessageFormat;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Applikationsklasse für die Verarbeitung mit Akka.
+ * Applikationclass.
  *
  * @author P.J. Meisch (pj.meisch@sothawo.com).
  */
@@ -31,30 +31,30 @@ public class BatchApp {
 
     /** Logger */
     protected LoggingAdapter log;
-    /** Name der Konfigurationsdatei */
+    /** name of the configuration file */
     private final String configFileName;
-    /** Name der Eingabedatei */
+    /** name of the input file */
     private String infileName = "not_specified";
-    /** Name der Ausgabedatei */
+    /** name of the output file */
     private String outfileName = "not_specified";
-    /** Konfiguration der Applikation */
+    /** application configuration */
     private Config configApp;
-    /** das Aktorensystem */
+    /** the actor system */
     private ActorSystem system;
-    /** das Inbox Objekt des Akka Systems */
+    /** the Inbox oject of the actor system */
     private Inbox inbox;
-    /** der Reader */
+    /** the Reader */
     private ActorRef reader;
 
 // --------------------------- CONSTRUCTORS ---------------------------
 
     /**
      * @param args
-     *         Programmargumente
+     *         program arguments
      */
     public BatchApp(String[] args) {
         if (null == args || args.length < 1) {
-            throw new IllegalArgumentException("falscher Aufruf; Parameter: <config> [<infile> <outfile>]");
+            throw new IllegalArgumentException("wrong calö; arguments: <config> [<infile> <outfile>]");
         }
         configFileName = args[0];
         if (args.length > 1) {
@@ -69,7 +69,7 @@ public class BatchApp {
 
     /**
      * @param args
-     *         Programmargumente
+     *         program arguments
      */
     public static void main(String[] args) {
         new BatchApp(args).run();
@@ -103,8 +103,7 @@ public class BatchApp {
             }
 
             if (runMaster) {
-                log.debug("Starte Verarbeitung...");
-                // Verarbeitung durch Nachricht an den Reader starten
+                log.debug("starting processing...");
                 inbox.send(reader, new InitReader(infileName, configApp.getString("charset.infile")));
             }
             waitForWorkDone();
@@ -118,19 +117,19 @@ public class BatchApp {
     }
 
     /**
-     * liest die Konfiguration ein
+     * reads the configuration
      *
-     * @return KOnfiguration
+     * @return configuration
      */
     private Config getConfig() {
-        // Konfiguration aus Datei im Filesystem, nicht im Classpath
+        // config from the file system
         Config configFile = ConfigFactory.parseFile(new File(configFileName));
 
-        // application Konfiguration aus dem Classpath ohne resolving, das kommt nach dem merge
+        // application configuration from the classpath without resolving, this is done after the merge
         ConfigParseOptions parseOptions = ConfigParseOptions.defaults();
         ConfigResolveOptions resolveOptions = ConfigResolveOptions.defaults().setAllowUnresolved(true);
         Config configAll = ConfigFactory.load("application", parseOptions, resolveOptions);
-        // merge und dann resolve
+        // merge and then resolve
         configAll = configFile.withFallback(configAll).resolve();
 
         configApp = configAll.getConfig("com.sothawo.akkabatch");
@@ -138,10 +137,10 @@ public class BatchApp {
     }
 
     /**
-     * Initialisiert das Akka System und den Logger.
+     * initializes the akka system and the logger
      *
      * @param config
-     *         KOnfigurationsobjekt.
+     *         configuration object
      */
     private void initAkka(Config config) {
         system = ActorSystem.create(configApp.getString("names.akka.system"), config);
@@ -150,14 +149,34 @@ public class BatchApp {
     }
 
     /**
-     * Initialisiert den Reader.
+     * initializes the Reader
      */
     private void initReader() {
         reader = system.actorOf(Props.create(Reader.class), configApp.getString("names.reader"));
     }
 
     /**
-     * Initialisiert die Worker.
+     * Initiaslizes the Writer
+     */
+    private void initWriter() throws AkkaBatchException {
+        /* der Writer */
+        ActorRef writer = system.actorOf(Props.create(Writer.class), configApp.getString("names.writer"));
+        inbox.send(writer, new InitWriter(outfileName, configApp.getString("charset.outfile")));
+        log.info("waiting for Writer to be initialized...");
+        Object msg = inbox.receive(Duration.create(5, TimeUnit.SECONDS));
+        if (msg instanceof InitResult) {
+            InitResult initResult = (InitResult) msg;
+            if (!initResult.getSuccess()) {
+                throw new AkkaBatchException("Error initializing the Writer");
+            }
+        } else {
+            throw new AkkaBatchException("unknown answer");
+        }
+        log.info("Writer-Initialization ready.");
+    }
+
+    /**
+     * Intializes the Worke actors
      */
     private void initWorkers() {
         system.actorOf(FromConfig.getInstance().props(Props.create(RecordModifier.class)),
@@ -167,27 +186,7 @@ public class BatchApp {
     }
 
     /**
-     * Initialisiert den Writer.
-     */
-    private void initWriter() throws AkkaBatchException {
-        /* der Writer */
-        ActorRef writer = system.actorOf(Props.create(Writer.class), configApp.getString("names.writer"));
-        inbox.send(writer, new InitWriter(outfileName, configApp.getString("charset.outfile")));
-        log.info("warten auf Writer-Intialisierung...");
-        Object msg = inbox.receive(Duration.create(5, TimeUnit.SECONDS));
-        if (msg instanceof InitResult) {
-            InitResult initResult = (InitResult) msg;
-            if (!initResult.getSuccess()) {
-                throw new AkkaBatchException("Fehler bei der Initialisierung des Writer");
-            }
-        } else {
-            throw new AkkaBatchException("unbekannte Antwort");
-        }
-        log.info("Writer-Intialisierung fertig.");
-    }
-
-    /**
-     * wartet dass die Verarbeitung abgeschlossen ist
+     * waits for the processing to be done
      *
      * @throws AkkaBatchException
      */
@@ -199,13 +198,13 @@ public class BatchApp {
         long endTime = System.currentTimeMillis();
         if (msg instanceof WorkDone) {
             System.out.println(
-                    MessageFormat.format("Verarbeitung {0}, Dauer: {1} ms",
-                                         ((WorkDone) msg).getSuccess() ? "OK" : "Fehler",
+                    MessageFormat.format("result {0}, Dauer: {1} ms",
+                                         ((WorkDone) msg).getSuccess() ? "OK" : "Error",
                                          endTime - startTime)
             );
         } else {
             throw new AkkaBatchException(
-                    MessageFormat.format("unerwartete Nachricht: {0}", msg.getClass().getCanonicalName()));
+                    MessageFormat.format("unexpected message: {0}", msg.getClass().getCanonicalName()));
         }
     }
 }

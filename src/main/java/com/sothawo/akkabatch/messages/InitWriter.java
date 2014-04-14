@@ -9,7 +9,7 @@
 package com.sothawo.akkabatch.messages;
 
 /**
- * Nachricht zur Initialisierung des Writers.
+ * Mesage to initialize the Writer.
  *
  * @author P.J.Meisch (pj.meisch@jaroso.de)
  */
@@ -17,9 +17,9 @@ public final class InitWriter {
 // ------------------------------ FIELDS ------------------------------
 
     public static final long serialVersionUID = 42L;
-    /** Name der Ausgabedatei */
+    /** Name of the output file */
     private final String outputFilename;
-    /** Encoding der Datei */
+    /** Encoding of the ouput file */
     private final String encoding;
 
 // --------------------------- CONSTRUCTORS ---------------------------

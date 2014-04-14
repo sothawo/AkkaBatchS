@@ -11,18 +11,18 @@ package com.sothawo.akkabatch;
 import com.sothawo.akkabatch.messages.DoWork;
 
 /**
- * Information über eine DoWork Nachricht in der Verarbeitung.
+ * Information about a DoWork message during processing.
  *
  * @author P.J.Meisch (pj.meisch@jaroso.de)
  */
 public class DoWorkInfo {
 // ------------------------------ FIELDS ------------------------------
 
-    /** die DoWork Nachricht */
+    /** the DoWork message */
     private final DoWork doWork;
-    /** Timestamp des letzten Sendevorgangs */
+    /** Timestamp of the last send */
     private long timestamp;
-    /** Anzahl bisheriger Sendeversuche */
+    /** number of sending operations */
     private int sendCount;
 
 // --------------------------- CONSTRUCTORS ---------------------------
@@ -46,7 +46,7 @@ public class DoWorkInfo {
 // -------------------------- OTHER METHODS --------------------------
 
     /**
-     * setzt den internen Timestamp und erhöht den sendCount Zähler
+     * stes the internal timestamp value and increases the sendcount value
      *
      * @param timestamp
      */

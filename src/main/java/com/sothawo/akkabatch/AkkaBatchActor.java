@@ -14,7 +14,7 @@ import akka.event.LoggingAdapter;
 import com.typesafe.config.Config;
 
 /**
- * Basisklasse für die Aktoren des Systems. Stellt Logger und Konfiguration bereit.
+ * base class for the actors. provides logger and configuration.
  *
  * @author P.J.Meisch (pj.meisch@jaroso.de)
  */
@@ -23,9 +23,9 @@ public abstract class AkkaBatchActor extends UntypedActor {
 
     /** Logger */
     protected final LoggingAdapter log = Logging.getLogger(getContext().system(), this);
-    /** das globale Konfigurationsobjekt */
+    /** global configuration object */
     protected Config configAll;
-    /** die Unterkonfiguration der Anwendung */
+    /** application configuration */
     protected Config configApp;
 
 // ------------------------ CANONICAL METHODS ------------------------

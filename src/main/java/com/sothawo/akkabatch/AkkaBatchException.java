@@ -9,11 +9,13 @@
 package com.sothawo.akkabatch;
 
 /**
- * Exceptionklasse.
+ * exception-class.
  *
  * @author P.J.Meisch (pj.meisch@jaroso.de)
  */
 public class AkkaBatchException extends Exception {
+// --------------------------- CONSTRUCTORS ---------------------------
+
     public AkkaBatchException(String s) {
         super(s);
     }

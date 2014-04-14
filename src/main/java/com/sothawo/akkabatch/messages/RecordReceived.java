@@ -9,7 +9,7 @@
 package com.sothawo.akkabatch.messages;
 
 /**
- * Nachricht, dass Daten vom Writer empfangen wurden.
+ * Message from the Writer to the Reader that data was received.
  *
  * @author P.J.Meisch (pj.meisch@jaroso.de)
  */
@@ -18,7 +18,7 @@ public final class RecordReceived {
 
     public static final long serialVersionUID = 42L;
 
-    /** Id des Datensatzes */
+    /** Id of the received record */
     private final Long id;
 
 // --------------------------- CONSTRUCTORS ---------------------------

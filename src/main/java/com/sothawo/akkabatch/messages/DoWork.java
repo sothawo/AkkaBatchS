@@ -3,6 +3,8 @@ package com.sothawo.akkabatch.messages;
 import java.io.Serializable;
 
 /**
+ * Message with the work to be done; sent from the Reader.
+ *
  * @author P.J. Meisch (pj.meisch@sothawo.com).
  */
 public final class DoWork implements Serializable {
@@ -11,7 +13,7 @@ public final class DoWork implements Serializable {
     public static final long serialVersionUID = 42L;
     /** Record-ID */
     private final Long recordId;
-    /** Original csv Wert */
+    /** Original csv value */
     private final String csvOriginal;
 
 // --------------------------- CONSTRUCTORS ---------------------------

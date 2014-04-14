@@ -18,9 +18,9 @@ public class RecordModifier extends AkkaBatchActor {
     protected static final String CONFIG_DROPRATE = "simulation.recordModifier.droprate";
 
     private static Random random = new Random();
-    /** der Writer */
+    /** the Writer */
     private ActorSelection writer;
-    /** Ausfallrate */
+    /** Adrop rate per thousand */
     private int dropRatePerMille = 0;
     private long numProcessed;
     private long numDropped;
@@ -62,9 +62,9 @@ public class RecordModifier extends AkkaBatchActor {
 
         // Writer ist im Master
         String writerPath = configApp.getString("network.master.address") + configApp.getString("names.writerRef");
-        log.info("Writer Path aus Konfiguration: " + writerPath);
+        log.info("Writer path from configuration: " + writerPath);
         writer = context().actorSelection(writerPath);
-        log.info(MessageFormat.format("sende Daten zu {0}, drop rate: {1} 0/00", writer.pathString(), dropRatePerMille));
+        log.info(MessageFormat.format("sending data to {0}, drop rate: {1} 0/00", writer.pathString(), dropRatePerMille));
     }
 
     @Override

@@ -9,7 +9,7 @@
 package com.sothawo.akkabatch.messages;
 
 /**
- * Nachricht zur Initialisierung des Readers.
+ * Message to initialize the Reader.
  *
  * @author P.J.Meisch (pj.meisch@jaroso.de)
  */
@@ -17,9 +17,9 @@ public final class InitReader {
 // ------------------------------ FIELDS ------------------------------
 
     public static final long serialVersionUID = 42L;
-    /** Name der Eingabedatei */
+    /** Name of the input file */
     private final String inputFilename;
-    /** Encoding der Datei */
+    /** Encoding of the input file */
     private final String encoding;
 
 // --------------------------- CONSTRUCTORS ---------------------------

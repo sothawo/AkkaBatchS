@@ -3,11 +3,12 @@ package com.sothawo.akkabatch.messages;
 import java.io.Serializable;
 
 /**
- * Nachricht, dass Arbeit verfügbar.
+ * Message from the Reader that data to be processed is available.
  *
  * @author P.J. Meisch (pj.meisch@sothawo.com).
  */
 public class WorkAvailable implements Serializable {
-    // ------------------------------ FIELDS ------------------------------
+// ------------------------------ FIELDS ------------------------------
+
     public static final long serialVersionUID = 42L;
 }

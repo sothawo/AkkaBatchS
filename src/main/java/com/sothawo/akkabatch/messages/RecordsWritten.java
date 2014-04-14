@@ -9,7 +9,7 @@
 package com.sothawo.akkabatch.messages;
 
 /**
- * Nachricht, dass Daten vom Writer geschrieben wurden.
+ * Message from the Writer that a certain amount of data was written to the output.
  *
  * @author P.J.Meisch (pj.meisch@jaroso.de)
  */
@@ -18,7 +18,7 @@ public final class RecordsWritten {
 
     public static final long serialVersionUID = 42L;
 
-    /** Anzahl geschriebener Datensätze */
+    /** number of written records */
     private final Long numRecords;
 
 // --------------------------- CONSTRUCTORS ---------------------------

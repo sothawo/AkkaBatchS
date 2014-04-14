@@ -5,6 +5,8 @@ import com.sothawo.akkabatch.Record;
 import java.io.Serializable;
 
 /**
+ * Message conatining the record to process.
+ *
  * @author P.J. Meisch (pj.meisch@sothawo.com).
  */
 public final class ProcessRecord implements Serializable {

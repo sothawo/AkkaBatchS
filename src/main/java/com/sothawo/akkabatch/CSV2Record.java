@@ -17,7 +17,7 @@ import java.text.MessageFormat;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Aktor zum Erzeugen eines Record aus einer csv Zeile.
+ * Actor to create a Record from a csv line
  *
  * @author P.J.Meisch (pj.meisch@jaroso.de)
  */
@@ -25,15 +25,15 @@ public class CSV2Record extends AkkaBatchActor {
 // ------------------------------ FIELDS ------------------------------
 
     protected static final String REGISTER = "register";
-    /** der Aktor für den nächsten Schritt */
+    /** actor for the next processing step */
     private ActorSelection recordModifier;
-    /** Register Message */
+    /** Register message */
     private final Register register = new Register();
-    /** GetWork Message */
+    /** GetWork message */
     private final GetWork getWork = new GetWork();
-    /** der Reader, bei dem Daten abgerufen werden */
+    /** the Reader, where work is pulled from */
     private ActorSelection reader;
-    /** Scheduled Objekt für die Registrierung */
+    /** Scheduler object for the registration */
     private Cancellable registerSchedule = null;
 
 // ------------------------ CANONICAL METHODS ------------------------
@@ -52,18 +52,18 @@ public class CSV2Record extends AkkaBatchActor {
     }
 
     /**
-     * die eigentliche Verarbeitung.
+     * does the work
      *
      * @param doWork
-     *         zu verarbeitende Daten
+     *         work to be done
      */
     private void doWork(DoWork doWork) {
-        // in Record umwandeln und weiterschicken
+        // convert into a Record and send it off
         recordModifier.tell(new ProcessRecord(doWork.getRecordId(), doWork.getCsvOriginal(),
                                               Record.fromLine(doWork.getCsvOriginal())), getSelf());
-        // etwas Zeit verbraten
+        // use some time
         RecordProcessor.useTime();
-        // neue Arbeit anfordern
+        // ask for more work
         sender().tell(getWork, getSelf());
     }
 
@@ -80,19 +80,17 @@ public class CSV2Record extends AkkaBatchActor {
     public void preStart() throws Exception {
         super.preStart();
 
-        // Reader ist im Master
+        // Reader istfound on the master host
         String readerPath = configApp.getString("network.master.address") + configApp.getString("names.readerRef");
-        log.info("Reader Path aus Konfiguration: " + readerPath);
+        log.info("Reader path from configuration: " + readerPath);
         reader = getContext().actorSelection(readerPath);
 
-        // recordModifier ist wie dieser Aktor im Worker
+        // RecordModifier is in the same host
         recordModifier = getContext().actorSelection(configApp.getString("names.recordModifierRef"));
-        log.info(MessageFormat.format("hole Daten von {0}, sende Daten zu {1}", reader.pathString(),
+        log.info(MessageFormat.format("get data from {0}, send data to {1}", reader.pathString(),
                                       recordModifier.pathString()));
 
-        // zyklische Nachricht an das eigene Objekt mit einem String, um sich beim Reader zu registrieren
-        // schöner wäre, den Scheduler gleich an den Reader schicken zu lassen, aber das ist mit einer ActorSelection
-        // nicht möglich.
+        // frepeated message to myself to reregister with the Reader
         registerSchedule = getContext().system().scheduler().schedule(Duration.create(0, TimeUnit.SECONDS),
                                                                       Duration.create(configApp
                                                                                               .getInt("times.registerIntervall"),

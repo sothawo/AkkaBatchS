@@ -11,27 +11,27 @@ import java.io.PrintWriter;
 import java.text.MessageFormat;
 
 /**
- * Batch-Applikationsklasse.
+ * Batch-application. Serial, sequential, no Akka.
  *
  * @author P.J.Meisch (pj.meisch@sothawo.com)
  */
 public class BatchAppSerial {
 // ------------------------------ FIELDS ------------------------------
 
-    /** Name der Eingabedatei */
+    /** name of the input file */
     private final String infileName;
-    /** Name der Ausgabedatei */
+    /** name of the output file */
     private final String outfileName;
 
 // --------------------------- CONSTRUCTORS ---------------------------
 
     /**
      * @param args
-     *         Programmargumente.
+     *         program arguments
      */
     public BatchAppSerial(String[] args) {
         if (null == args || args.length < 2) {
-            throw new IllegalArgumentException("falsche Anzahl Parameter");
+            throw new IllegalArgumentException("wrong number of arguments");
         }
         infileName = args[0];
         outfileName = args[1];
@@ -40,10 +40,10 @@ public class BatchAppSerial {
 // --------------------------- main() method ---------------------------
 
     /**
-     * Main Methode
+     * main method
      *
      * @param args
-     *         Programmargumente
+     *         program arguments
      */
     public static void main(String[] args) {
         try {
@@ -54,37 +54,31 @@ public class BatchAppSerial {
     }
 
     /**
-     * führt die komplette Verarbeitung durch
+     * does the processing
      */
     private void run() throws Exception {
-        // Eingabe
         BufferedReader reader = new BufferedReader(
                 new InputStreamReader(new FileInputStream(infileName), "iso-8859-1"));
 
-        // Ausgabe
         PrintWriter writer = new PrintWriter(outfileName, "iso-8859-1");
 
-
-        // sonstige Initialisierung
         long numRecords = 0;
         long startTime = System.currentTimeMillis();
 
-        // Verarbeitung
         String line = reader.readLine();
         while (null != line) {
             numRecords++;
             ProcessRecord processRecord = new ProcessRecord(numRecords, line,
                                                             RecordProcessor.processRecord(Record.fromLine(line)));
             writer.println(processRecord.getCsvOriginal());
-            if(0 == (numRecords % 10000)){
-                System.out.println(MessageFormat.format("verarbeitet: {0}: ", numRecords));
+            if (0 == (numRecords % 10000)) {
+                System.out.println(MessageFormat.format("processed: {0}: ", numRecords));
             }
             line = reader.readLine();
         }
 
-        //Auswertung
         long endTime = System.currentTimeMillis();
         writer.close();
-        System.out.println(MessageFormat.format("Dauer: {0} ms, {1} Sätze", endTime - startTime, numRecords));
+        System.out.println(MessageFormat.format("duration: {0} ms, {1} records", endTime - startTime, numRecords));
     }
 }

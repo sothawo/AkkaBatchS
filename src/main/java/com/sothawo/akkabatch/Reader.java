@@ -25,7 +25,7 @@ import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Reader-Aktor.
+ * Reader-actor.
  *
  * @author P.J.Meisch (pj.meisch@jaroso.de)
  */
@@ -33,55 +33,54 @@ public class Reader extends AkkaBatchActor {
 // ------------------------------ FIELDS ------------------------------
 
     protected static final String CLEANUP_WORKERS = "cleanupWorkers";
-    /** die Inbox des Systems, für die letzte Meldung am Schluss */
+    /** the Inbox of the system, for the last message at the end */
     private ActorRef inbox;
 
-    /** zum Lesen der Eingabedaten */
+    /** to read the input data */
     private BufferedReader reader;
 
-    /** eine Instanz der Nachricht reicht */
+    /** instance of the WorkAvailable message */
     private WorkAvailable workAvailable;
 
-    /** Zuordnung registrierte Worker -> Timestamp der registrierung */
+    /** mappign of registered workers to the timestamp of the registration */
     private final Map<ActorRef, Long> workers = new HashMap<>();
 
     /**
-     * aktuell zu verarbeitende Daten, in Map, damit bei einem resend nicht der gleiche Datensatz mehrfach verschickt
-     * wird, explizit als TreeMap
+     * actaul work to be done; put in a map, so when the work is rescheduled because of a timeout, it's not duplicated
      */
     private final TreeMap<Long, DoWork> workToBeDone = new TreeMap<>();
 
-    /** maximale Anzahl gleichzeitg im System befindlicher Datensätze */
+    /** maximum number of records allowed in the system */
     private long maxNumRecordsInSystem;
 
-    /** Anzahl Sätze im System, die unterschritten werden müssen, um ein Füllen auszulösen */
+    /** number of records in the system which cause a refill of the internal buffer */
     private long fillLevel;
 
-    /** aktuelle Anzahl gleichzeitig im System befindlicher Datensätze */
+    /** actal number of records in the system */
     private long actNumRecordsInSystem;
 
-    /** recordId des nächsten zu lesenden Satzes */
+    /** recordId of the next record to read */
     private long recordSerialNo;
 
-    /** Anzahl aus der Eingabedatei gelesener Sätze */
+    /** number of records read fromm the input file */
     private long numRecordsInInput;
 
-    /** Anzahl in die Ausgabedatei geschriebener Sätze */
+    /** number of records written to the output file */
     private long numRecordsInOutput;
 
-    /** Anzahl schon verarbeiteter, aber noch nicht geschriebener Sätze */
+    /** number of processed records, they must not be written out yet */
     private long numRecordsProcessed;
 
-    /** durchschnittliche Verarbeitungszeit eines Datensatzes */
+    /** average processing time of a record */
     private long averageProcessingTimeMs;
 
-    /** Map mit Infos zu den aktuellen DoWork Nachrichten */
+    /** map from recordIDs to DoWorkInfos */
     private Map<Long, DoWorkInfo> doWorkInfos = new HashMap<>();
 
-    /** die Message zum erneuten Senden */
+    /** mesage for resend */
     private SendAgain resend;
 
-    /** Schedule um Worker aufzuräumen */
+    /** Schedule to cleanup workers */
     private Cancellable cleanupWorkersSchedule;
 
 // ------------------------ CANONICAL METHODS ------------------------
@@ -108,11 +107,11 @@ public class Reader extends AkkaBatchActor {
     }
 
     /**
-     * entfernt Worker, sie sich nicht rechtzeitig neu registriert haben aus der workers Map
+     * removes works which have not reregistered in time from the workers mapder workers Map
      */
     private void cleanupWorkers() {
         Map<ActorRef, Long> cleanWorkers = new HashMap<>();
-        // veraltet ist 5 mal registerIntervall, Umrechnung in ms
+        // 5x registerInterval means timeout
         long staleTimestamp = System.currentTimeMillis() - (5000 * configApp.getInt("times.registerIntervall"));
         for (Map.Entry<ActorRef, Long> entry : workers.entrySet()) {
             if (entry.getValue() > staleTimestamp) {
@@ -126,10 +125,10 @@ public class Reader extends AkkaBatchActor {
     }
 
     /**
-     * MessageHandler, initialisiert den Reader und startet die Verarbeitung.
+     * MessageHandler, initializes the Reader and starts processing
      *
      * @param message
-     *         die Nachricht
+     *         init message
      */
     private void initReader(InitReader message) {
         inbox = sender();
@@ -149,18 +148,17 @@ public class Reader extends AkkaBatchActor {
                     new InputStreamReader(new FileInputStream(message.getInputFilename()), message.getEncoding()));
             fillWorkToBeDone();
         } catch (IOException e) {
-            log.error(e, "Initialisierung Reader");
+            log.error(e, "Initializing Reader");
             result = false;
         }
-        log.info(MessageFormat.format("Datei: {0}, Zeichensatz: {1}, Init-Ergebnis: {2}", message.getInputFilename(),
+        log.info(MessageFormat.format("file: {0}, encoding: {1}, Init-result: {2}", message.getInputFilename(),
                                       message.getEncoding(), result));
-        // Fehler zurückmelden
         if (!result) {
             sender().tell(new WorkDone(false), getSelf());
         } else {
             // resend Message schedulen
             resend = new SendAgain();
-            // der erste resend nach 500ms, danach passt sich das Systen selber ann
+            // first resend after 500ms, after that the resend period is calculated dynamically
             getContext().system().scheduler()
                         .scheduleOnce(Duration.create(500, TimeUnit.MILLISECONDS), getSelf(), resend,
                                       getContext().dispatcher(),
@@ -169,27 +167,22 @@ public class Reader extends AkkaBatchActor {
     }
 
     /**
-     * MessageHandler, entfernt den entsprechenden Datensatz aus der Map der eventuell neu zu versendenden Nachrichten
-     * und aktualisiert die durchschnittliche Verarbeitungszeit.
+     * removes the corrsepondign record from the map of potentially resendable records and updates the average processing time
      *
      * @param message
-     *         enthält die Id des vom Writer empfangenen Datensatzes.
+     *         contains the id of the processed record
      */
     private void recordReceived(RecordReceived message) {
         Long recordId = message.getId();
         DoWorkInfo doWorkInfo = doWorkInfos.get(recordId);
         if (null != doWorkInfo) {
-            // muss nicht mehr neu versendet werden
             doWorkInfos.remove(recordId);
-            // auch die schon für den Versand vorbereiteten Einträge löschen
             workToBeDone.remove(recordId);
 
-            // Verarbeitungszeit anpassen
             long duration = System.currentTimeMillis() - doWorkInfo.getTimestamp();
             if (0 == averageProcessingTimeMs) {
                 averageProcessingTimeMs = duration;
             } else if (duration != averageProcessingTimeMs) {
-                // TODO: evtl nur neu setzen, wenn Abweichung grösser Schwellwert
                 averageProcessingTimeMs =
                         ((averageProcessingTimeMs * numRecordsProcessed) + duration) / (numRecordsProcessed + 1);
             }
@@ -201,10 +194,10 @@ public class Reader extends AkkaBatchActor {
     }
 
     /**
-     * MessageHandler, lädt die nächsten Daten bzw. beendet die Verarbeitung
+     * MessageHandler, loads new data
      *
      * @param message
-     *         enthält die Anzahl der geschriebenen Daten
+     *         contains the number of written records
      * @throws IOException
      */
     private void recordsWritten(RecordsWritten message) throws IOException {
@@ -213,18 +206,17 @@ public class Reader extends AkkaBatchActor {
         fillWorkToBeDone();
         numRecordsInOutput += numRecordsWritten;
         if (null == reader && numRecordsInInput == numRecordsInOutput) {
-            // alles fertig
-            log.debug(MessageFormat.format("durchschn. Verarbeitungszeit: {0} ms", averageProcessingTimeMs));
+            // all done
+            log.debug(MessageFormat.format("average processing time: {0} ms", averageProcessingTimeMs));
             inbox.tell(new WorkDone(Boolean.TRUE), getSelf());
         }
     }
 
     /**
-     * füllt den Puffer der zu verarbeitenden Daten und benachrichtigt die Worker, dass Arbeit da ist.
+     * fills the buffer with records to process and notifies the workers
      */
     private void fillWorkToBeDone() throws IOException {
-        // nur füllen, wenn weniger als 90% der erlaubten Menge im System sind, sonst wird wegen einzelner reads
-        // ein notifyWorkers angestossen
+        // only fill when there are less than the configured records in the system
         if(actNumRecordsInSystem >= fillLevel) {
             return;
         }
@@ -237,13 +229,12 @@ public class Reader extends AkkaBatchActor {
                 actNumRecordsInSystem++;
                 numRecordsInInput++;
             } else {
-                // keine weiteren Daten mehr
+                // no more data
                 reader.close();
                 reader = null;
             }
             if (500 == numRecordsInInput) {
-                // nach den ersten 500 erst nicht weitermachen, damit die Maschinerie schnell anlaufen kann
-                // der Rest wird nach der Verarbeitung des ersten Satzes gemacht
+                // break after the first 500 records to get the system started fast
                 breakout = true;
             }
         }
@@ -251,12 +242,12 @@ public class Reader extends AkkaBatchActor {
     }
 
     /**
-     * registriert den Sender als Worker und gibt ihm evtl. gleich den Hinweis auf Arbeit
+     * registers the sender as worker and notifies if there is work
      */
     private void registerWorker() {
         ActorRef worker = sender();
         if (!workers.containsKey(worker)) {
-            log.info("Neuregistrierung von " + worker.path());
+            log.info("registered  " + worker.path());
         }
         workers.put(worker, System.currentTimeMillis());
         if (0 < workToBeDone.size()) {
@@ -265,10 +256,10 @@ public class Reader extends AkkaBatchActor {
     }
 
     /**
-     * MessageHandler, versendet die bisher nicht beim Writer angekommenen Nachrichten noch ein mal.
+     * MessageHandler, resends the timed out records again
      */
     private void resendMessages() {
-        // Daten mit Timeout (doppelte durchschnittliche Zeit) nach workToBeDone verschieben
+        // move data with timeout (twice the average processing time)
         long now = System.currentTimeMillis();
         long overdueTimestamp = now - (2 * averageProcessingTimeMs);
         for (Map.Entry<Long, DoWorkInfo> entry : doWorkInfos.entrySet()) {
@@ -280,7 +271,7 @@ public class Reader extends AkkaBatchActor {
         }
         notifyWorkers();
 
-        // neue Message schedulen
+        // check for resend in thrice the average processing time
         FiniteDuration interval = Duration.create((0 == averageProcessingTimeMs) ? 500 : (3 * averageProcessingTimeMs),
                                                   TimeUnit.MILLISECONDS);
         getContext().system().scheduler().scheduleOnce(interval, getSelf(), resend, getContext().dispatcher(),
@@ -288,7 +279,7 @@ public class Reader extends AkkaBatchActor {
     }
 
     /**
-     * verschickt eine WorkAvailable Nachricht an alle registrierten Worker, wenn es etwas zu tun gibt
+     * notifies the workers if there is work to be done
      */
     private void notifyWorkers() {
         if (0 < workToBeDone.size()) {
@@ -299,7 +290,7 @@ public class Reader extends AkkaBatchActor {
     }
 
     /**
-     * schickt den nächsten Satz zur Verarbeitung an einen Worker.
+     * sends the next work to the sender
      */
     private void sendWork() {
         if (0 < workToBeDone.size()) {
@@ -307,7 +298,6 @@ public class Reader extends AkkaBatchActor {
             Long recordId = doWork.getRecordId();
             workToBeDone.remove(recordId);
 
-            // nur in Info Map, wenn nicht schon drin
             if (!doWorkInfos.containsKey(recordId)) {
                 doWorkInfos.put(recordId, new DoWorkInfo(doWork));
             }
@@ -327,8 +317,7 @@ public class Reader extends AkkaBatchActor {
     @Override
     public void preStart() throws Exception {
         super.preStart();
-        // zyklische Nachricht an das eigene Objekt mit einem String, um sich veraltete Worker aufzuräumen,
-        // hier reicht ein String
+        // regular cleanup message
         cleanupWorkersSchedule = getContext().system().scheduler().schedule(Duration.create(0, TimeUnit.SECONDS),
                                                                             Duration.create(20 * configApp
                                                                                                     .getInt("times.registerIntervall"),

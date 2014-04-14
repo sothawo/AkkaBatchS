@@ -1,1 +1,1 @@
-ten in diesem Verzeichnis mit der Endung .csv werden nicht in git aufgenommen
+files from this directory ending in *.csv are ignored in git

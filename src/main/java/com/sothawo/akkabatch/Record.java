@@ -3,7 +3,7 @@ package com.sothawo.akkabatch;
 import java.io.Serializable;
 
 /**
- * Datensatz.
+ * record.
  */
 public final class Record implements Serializable {
 // ------------------------------ FIELDS ------------------------------
@@ -22,11 +22,11 @@ public final class Record implements Serializable {
 
     public static Record fromLine(String line) {
         if (null == line) {
-            throw new IllegalArgumentException("Record from null");
+            throw new IllegalArgumentException("record from null");
         }
         String[] fields = line.split("~", -1);
         if (fields.length != 10) {
-            throw new IllegalArgumentException("ungültige Daten: " + line);
+            throw new IllegalArgumentException("invalid data: " + line);
         }
         return new Record(fields[0], fields[1], fields[2], fields[3], fields[4], fields[5], fields[6], fields[7],
                    fields[8] + fields[9]);

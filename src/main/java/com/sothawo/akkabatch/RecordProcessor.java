@@ -3,7 +3,7 @@ package com.sothawo.akkabatch;
 import java.util.Random;
 
 /**
- * Datensatzverarbeitung. Liefert eine Kopie des Record und verbraucht etwas Zeit.
+ * Dummy record processing. creates a copy and uses some time.
  */
 public final class RecordProcessor {
 // ------------------------------ FIELDS ------------------------------
@@ -27,7 +27,7 @@ public final class RecordProcessor {
     }
 
     /**
-     * verbraucht Zeit
+     * use some time
      */
     public static void useTime() {
         if (0 == (rand.nextInt() % 2)) {

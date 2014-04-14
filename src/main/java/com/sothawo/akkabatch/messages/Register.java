@@ -3,11 +3,12 @@ package com.sothawo.akkabatch.messages;
 import java.io.Serializable;
 
 /**
- * Registrierungsnachricht.
+ * Message for registration with the Reader.
  *
  * @author P.J. Meisch (pj.meisch@sothawo.com).
  */
 public final class Register implements Serializable {
-    // ------------------------------ FIELDS ------------------------------
+// ------------------------------ FIELDS ------------------------------
+
     public static final long serialVersionUID = 42L;
 }

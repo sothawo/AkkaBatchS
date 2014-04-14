@@ -24,19 +24,19 @@ public class Writer extends AkkaBatchActor {
      */
     final LoggingAdapter log = Logging.getLogger(getContext().system(), this);
     /**
-     * für die eigentliche Ausgabe
+     * to write the output
      */
     private PrintWriter writer;
     /**
-     * Reader-Aktor
+     * Reader-actor
      */
     private ActorSelection reader;
     /**
-     * Puffer als TreeMap, da sortiert auf die Sätze zugegriffen werden muss
+     * Buffer als TreeMap, because we need sorted access to the data
      */
     private final TreeMap<Long, ProcessRecord> outputBuffer = new TreeMap<>();
     /**
-     * recordId des nächsten zu schreibenden Satzes
+     * recordId of the next record in the output file
      */
     private long nextRecordId;
 
@@ -54,14 +54,14 @@ public class Writer extends AkkaBatchActor {
     }
 
     /**
-     * verarbeitet den nächsten Datensatz.
+     * processes the next record
      *
      * @param processRecord
-     *         Datensatz zum Schreiben.
+     *         record to write
      */
     private void processRecord(ProcessRecord processRecord) {
         Long recordId = processRecord.getRecordId();
-        // wenn die Id schon verarbeitet wurde, ignorieren; kann durch einen resend passieren
+        // if the id has already been processed, ignore it, has been resend by the Reader too often.
         if (recordId >= nextRecordId) {
             reader.tell(new RecordReceived(recordId), getSelf());
             outputBuffer.put(recordId, processRecord);
@@ -73,7 +73,7 @@ public class Writer extends AkkaBatchActor {
                 recordsWritten++;
                 nextRecordId++;
                 if (0 == (nextRecordId % 10000)) {
-                    log.debug(MessageFormat.format("verarbeitet: {0}", nextRecordId));
+                    log.debug(MessageFormat.format("processed: {0}", nextRecordId));
                 }
             }
 
@@ -84,22 +84,22 @@ public class Writer extends AkkaBatchActor {
     }
 
     /**
-     * Initialisiert den Writer.
+     * Initializes the writer
      *
      * @param message
-     *         die Nachricht
+     *         init message
      */
     private void initWriter(InitWriter message) {
         Boolean result = true;
         try {
             writer = new PrintWriter(message.getOutputFilename(), message.getEncoding());
         } catch (FileNotFoundException | UnsupportedEncodingException e) {
-            log.error(e, "Initialisierung Writer");
+            log.error(e, "Initializing Writer");
             result = false;
         }
         outputBuffer.clear();
         nextRecordId = 1;
-        log.info(MessageFormat.format("Datei: {0}, Zeichensatz: {1}, Init-Ergebnis: {2}", message.getOutputFilename(),
+        log.info(MessageFormat.format("file: {0}, encoding: {1}, Init-result: {2}", message.getOutputFilename(),
                                       message.getEncoding(), result));
         sender().tell(new InitResult(result), getSelf());
     }
@@ -118,6 +118,6 @@ public class Writer extends AkkaBatchActor {
     public void preStart() throws Exception {
         super.preStart();
         reader = getContext().actorSelection(configApp.getString("names.readerRef"));
-        log.debug(MessageFormat.format("sende Infos an {0}", reader.pathString()));
+        log.debug(MessageFormat.format("sending infos to {0}", reader.pathString()));
     }
 }
