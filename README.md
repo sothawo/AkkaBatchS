@@ -1,112 +1,103 @@
-# BatchVerarbeitung mit Akka
+# batch processing with Akka
 
-Dieses Projekt dient dazu, die Batchverarbeitung mit Hilfe von [Akka](http://akka.io) zu implementieren.
+The purpose of this project is the implementation of a batch processing using [Akka](http://akka.io). It's more a
+proof of concept than a full productive solution, there is no special error handling.
 
-Es wird eine Datei eingelesen (csv), die Zeilen werden in Datensätze konvertiert und diese dann verarbeitet.
-Anschliessend werden die Daten wieder in Zeilen konvertiert und in eine Ausgabedatei geschrieben. Die benötigte Zeit
-wird gemessen. Zum Vergleich mit einer nicht parallelisierten Version gibt es eine serielle Variante.
+The program reads a file with comm separated values (csv), the lines are converted to records and they are then
+processed. The time needed is recorded. There also exists a non-parallel version to compare the processing speed.
 
-*Es gelten die folgenden Anforderungen:*
+*This are the basic requirements*
 
-- die Reihenfolge der Daten in der Ausgabedatei entspricht der in der Eingabedatei, auch ohne dass in der Eingabedatei
- eine laufende Nummer enthalten ist
-- die Verarbeitung muss auch mit beliebig grossen Dateien funktionieren, ohne dass Speicherprobleme auftreten
+- the sequence of data in the output must be the same as in the input even if there is no sequential number in the
+input data
+- it must be possible to process files with an arbitrary number of records without memory or performance problems
 
-*Für diesen Test wird die folgende Verarbeitung durchgeführt:*
+*for this test the following processing is done*
 
- - Erzeugen eines Datensatzes, der ausser den erzeugten Daten auch den Originalstring enthält
- - Umwandeln aller Felder in Großbuchstaben
- - Beim Schreiben eines Datensatzes wird der Originalstring verwendet, damit hinterher mit dem diff-Befehl geprüft
- werden kann, ob die Dateien gleich sind
+ - creation of a record which contains the original csv value
+ - creation a copy of the record
+ - calculate a fibonacci number or do a thread sleep
+ - when writing the output, the original csv value is used so that input and output can be compared using the diff
+ command. This is to ensure that the records are written in the correct order.
 
-# die verwendeten Aktoren
+# the used actors
 
-Im folgenden werden die beteiligten Aktoren und die zwischen ihnen ausgetauschten Nachrichten beschrieben. Es wird
-ein Pull-Konzept verwendet, das dafür sorgt, dass die anstehende Arbeit auf die Worker verteilt wird, welche gerade
-frei sind. Die Idee hierfür stammt aus diesem [Blogeintrag](http://www.michaelpollmeier.com/akka-work-pulling-pattern/)
+The following sections describe the used actors and the messages that are passed between them. The program uses a
+pull-pattern which ensures that the the work to be done is distributed among the actors which are not busy at the
+moment. The idea for this I took from this [blog entry](http://www.michaelpollmeier.com/akka-work-pulling-pattern/)
 
 ![Aktoren-Grafik](https://bitbucket.org/sothawo/akkabatch/downloads/AkkaBatch.svg)
 
 ## Reader
 
-Der Reader ist die Steuerungszentrale des Verarbeitungsprozesses. Bei ihm registrieren sich die CSV2Record Aktoren,
-er bekommt den Auftrag zur Verarbeitung einer Datei. Der Reader liest die Daten satzweise ein,
-so dass immer nur eine maximal definierte Anzahl von Records im System ist. Dadurch wird verhindert,
-dass zum einen das System mit Daten überflutet wird, und zum anderen, das der Writer zu viele Daten puffern muss,
-wenn ein Datensatz zu lange in der Verarbeitung bleibt.
+The Reader is the main actor of the whole program. The CSV2Record actors register with the Reader and the Reader gets
+ the message to process a file. It reads the lines from the input file and takes care that there is always a limited
+ number of records in the system. This prevents that the system is flooded with data and that the Writer has to
+ buffer too many processed records if one records takes a little longer during processing.
 
-### eingehende Nachrichten
+### incoming messages
 
-- Register wird von einem CSV2Record gesendet um sich zu registrieren. Diese Nachricht muss zyklisch gesendet werden,
- da der Reader registrierte CSV2Record Aktoren, die sich nicht regelmässig melden, aus seiner internen Liste entfernt.
-- InitReader enthält den Namen der zu verarbeitenden Datei und wird zum Beginn der Verarbeitung von Inbox gesendet.
-- GetWork wird von einem CSV2Record gesendet, wenn dieser einen Datensatz verarbeiten kann.
-- RecordReceived, enthält eine Record-ID und wird vom Writer gesendet, wenn dieser den entsprechenden Datensatz
-erhalten hat. Der Reader entfernt diesen aus seiner internen List mit evtl. noch einmal zu sendenden Daten.
-- RecordsWritten wird vom Writer gesendet, wenn dieser Ausgabedatensätze geschrieben hat. Anhand der übermittelten
-Anzahl kann der Reader entsprechend neue Daten einlesen und in die Verarbeitung schicken und auch feststellen,
-ob alle Daten verarbeitet wurden.
-- SendAgain wird über einen Scheduler regelmässig gesendet und dient dazu, das erneute Verarbeiten von Datensätzen,
-die nicht in der vorgegebenen Zeit beim Writer angekommen sind, anzustossen.
+- Register is sent by a CSV2Record to register with the Reader. Thes message must be resent regularly because the
+Reader removes CSV2Record actors which don't reregister after a certain time. This is to prevent that the Reader
+sends data to actors which are no longer available.
+- InitReader contains information about the file to process and is sent in the beginning by the Inbox of the system.
+- GetWork is sent by a CSV2Record when this actor can process some data.
+- RecordReceived, contains the record-id and is sent by the Writer if it has received the corresponding record. The
+Reader then removes this record from the list of records that may have to be sent again.
+- RecordsWritten is sent by the Writer when it has written some data to the output. The message contains the number
+of written records and enables the Reader to read the next data.
+- SendAgain is sent by the Reader itself. The purpose of this message is to check if some records need to be sent
+again if the processing takes too long.
 
-### ausgehende Nachrichten
+### outgoing messages
 
-- WorkAvailable wird an alle registrierten CSV2Record Aktoren gesendet, wenn neue Daten eingelesen oder aber schon
-einmal versendete Daten nicht nnerhalb einer konfigurierten Zeit beim Writer angekommen sind.
-- DoWork, enthält Record-Id und CSV Zeile, wird an einen CVS2Record Aktor gesendet,
-wenn dieser die Nachricht GetWork an den Reader gesendet hat und es Daten zur Verarbeitung gibt.
-- WorkDone wird an Inbox gesendet, wenn alle Daten verarbeitet wurden oder wenn ein Fehler aufgetreten ist. Die
-Nachricht enthält ein entsprechendes Flag.
+- WorkAvailable is sent to all registered CSV2Record actors when new data is available.
+- DoWork, contains the record-id and the csv line, is sent to a CVS2Record actor in response to a GetWork message.
+- WorkDone is sent to Inbox when all records are processed or there has been an error.
 
 ## Writer
 
-Die Aufgabe des Writers ist es, die erhaltenen Datensätze in die Ausgabedatei zu schreiben,
-so dass die ursprüngliche Reihenfolge beibehalten wird. Hierfür hat der Writer einen Puffer,
-in welchen  die Sätze gespeichert werden, die noch nicht geschrieben werden können,
-weil sie im Laufe der Verarbeitung eine anderen Datensatz überholt haben. Die Verwaltung dieser Sätze geschieht
-anhand der Record-ID, welche bei 0 beginnt und sequentiell steigt.
+The Writer is responsible to write the records it gets to the output file keeping the original order of the records.
+To achieve this, the Writer has an internal buffer where the records are stored which can not yet be written because
+they were processed faster than records which need to be written before them. The management of this records is done
+by using the record id which is sequentially generated by the Reader.
 
-Der Writer hat eine Referenz auf den Reader, welche aus der Konfiguration ermittelt wird.
+### incming messages
 
-### eingehende Nachrichten
+- InitWriter, contains name and encoding of the output file. Sent by the Inbox object.
+- ProcessRecord (contains the record-id, the processed record and the original csv line)
 
-- InitWriter, enthält den Namen der Ausgabedatei. Wird vom Inbox Objekt des Programms aufgerufen und setzt die
-internen Datenstrukturen zurück.
-- ProcessRecord (enthält die Record-ID, die Originalzeile und den Datensatz), enthält die zu schreibenden Daten
+### outgoing messages
 
-### ausgehende Nachrichten
-
-- InitReady wird an Inbox gesendet wenn ein InitWriter empfangen wurde und die internen Strukturen initialisiert
-wurden, enthält ein Flag, ob die Initialisierung erfolgreich war.
-- RecordReceived, enthält eine Record-ID und wird an den Reader gesendet, wenn ein ProcessRecord empfangen wurde,
-damit der Reader den entsprechenden Record nicht noch einmal in die Verarbeitung schickt.
-- RecordsWritten wird an den Reader gesendet, wenn Datensätze in die Ausgabe geschrieben wurden. Die Nachricht
-enthält die Anzahl der geschriebenen Records
+- InitReady is sent to the Inbox when the InitWriter message was received and the internal structures are
+intialized; contains a flag signaling success.
+- RecordReceived, contains a record-id and is sent to the Reader when a PrcoessRecord message was received to
+keep the Reader from sending the record again into the system.
+- RecordsWritten is sent to the Reader when output records have been written. The message contains the number of
+written records.
 
 ## CSV2Record
-Der Aktor ist dafür zuständig, aus einer Zeile im CSV Format einen Datensatz zu erzeugen.
+This actor converts a line in csv format into a record. For simulation purposes the actor just uses some processing
+time as well.
 
-### eingehende Nachrichten
-- WorkAvailable, wird vom Reader an die registrierten CSV2Record Aktoren gesendet,
-wenn Daten zur Verarbeitung vorhanden sind.
-- DoWork, (enthält die Record-ID und die csv-Zeile), wird vom Reader gesendet, nachdem der CSV2Record sich bei diesem
- mit GetWork gemeldet hat
+### incoming messages
+- WorkAvailable, is sent from the Reader to the registered CSV2Record actors, when there is data to be processed.
+- DoWork (contains the record-id and the csv-line), is sent from the Reader after the CSV2Record has sent a GetWork
+message to the Reader.
 
-### ausgehende Nachrichten
-- Register (enthält die Kennung des CSV2Record), wird in zyklischen Abständen an den Reader gesendet,
-um sich bei diesem zu registrieren.
-- GetWork, wird an den Reader gesendet, wenn der Actor bereit ist zum Arbeiten. Dies ist der Fall nach der
-Verarbeitung eines vorhergegangene Record oder wenn der Actor die Nachricht WorkAvailable empfangen hat.
-- ProcessRecord (enthält die Record-ID, die Originalzeile und den Datensatz), wird an den RecordModifier gesendet.
-Der Name des RecordModifier wird über die Konfiguration ermittelt.
+### outgoing messages
+- Register is sent regularly to the Reader.
+- GetWork, is sent to the Reader when the actor is ready to do some work either after the previous work has been
+processed or after the actor has received a WorkAvailable message.
+- ProcessRecord (contains the record-iD, die the original line and the record),
+is sent to a RecordModifier.
 
 ## RecordModifier
-Der Aktor führt die eigentliche Verarbeitung durch.
+This actor does the processing of the record.
 
-### eingehende Nachrichten
-- ProcessRecord (siehe CSV2Record)
+### incoming messages
+- ProcessRecord (see CSV2Record)
 
-### ausgehende Nachrichten
-- ProcessRecord (der enthaltene Datensatz ist bearbeitet, die Nachricht ist **nicht** die eingelieferte!),
-wird an den Writer gesendet. Der Name des Writer wird über die Konfiguration ermittelt.
+### outgoing messages
+- ProcessRecord (contains the processed record), is sent to the Writer.
 
