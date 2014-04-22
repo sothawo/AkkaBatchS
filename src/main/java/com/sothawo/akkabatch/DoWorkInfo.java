@@ -20,8 +20,10 @@ public class DoWorkInfo {
 
     /** the DoWork message */
     private final DoWork doWork;
+
     /** Timestamp of the last send */
     private long timestamp;
+
     /** number of sending operations */
     private int sendCount;
 

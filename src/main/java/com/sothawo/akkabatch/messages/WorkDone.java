@@ -11,18 +11,19 @@ public final class WorkDone implements Serializable {
 // ------------------------------ FIELDS ------------------------------
 
     public static final long serialVersionUID = 42L;
+
     /** success-flag */
     private final Boolean success;
 
 // --------------------------- CONSTRUCTORS ---------------------------
 
-    public WorkDone(Boolean success) {
+    public WorkDone(final Boolean success) {
         this.success = success;
     }
 
 // --------------------- GETTER / SETTER METHODS ---------------------
 
-    public Boolean getSuccess() {
+    public Boolean isSuccess() {
         return success;
     }
 }

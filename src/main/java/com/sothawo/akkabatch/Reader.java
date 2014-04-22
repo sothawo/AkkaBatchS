@@ -33,54 +33,85 @@ public class Reader extends AkkaBatchActor {
 // ------------------------------ FIELDS ------------------------------
 
     protected static final String CLEANUP_WORKERS = "cleanupWorkers";
-    /** the Inbox of the system, for the last message at the end */
+
+    /**
+     * the Inbox of the system, for the last message at the end
+     */
     private ActorRef inbox;
 
-    /** to read the input data */
+    /**
+     * to read the input data
+     */
     private BufferedReader reader;
 
-    /** instance of the WorkAvailable message */
+    /**
+     * instance of the WorkAvailable message
+     */
     private WorkAvailable workAvailable;
 
-    /** mappign of registered workers to the timestamp of the registration */
+    /**
+     * mapping of registered workers to the timestamp of the registration
+     */
     private final Map<ActorRef, Long> workers = new HashMap<>();
 
     /**
-     * actaul work to be done; put in a map, so when the work is rescheduled because of a timeout, it's not duplicated
+     * actual work to be done; put in a map, so when the work is rescheduled because of a timeout, it's not duplicated
      */
     private final TreeMap<Long, DoWork> workToBeDone = new TreeMap<>();
 
-    /** maximum number of records allowed in the system */
+    /**
+     * maximum number of records allowed in the system
+     */
     private long maxNumRecordsInSystem;
 
-    /** number of records in the system which cause a refill of the internal buffer */
+    /**
+     * number of records in the system which cause a refill of the internal buffer
+     */
     private long fillLevel;
 
-    /** actal number of records in the system */
+    /**
+     * actual number of records in the system
+     */
     private long actNumRecordsInSystem;
 
-    /** recordId of the next record to read */
+    /**
+     * recordId of the next record to read
+     */
     private long recordSerialNo;
 
-    /** number of records read fromm the input file */
+    /**
+     * number of records read fromm the input file
+     */
     private long numRecordsInInput;
 
-    /** number of records written to the output file */
+    /**
+     * number of records written to the output file
+     */
     private long numRecordsInOutput;
 
-    /** number of processed records, they must not be written out yet */
+    /**
+     * number of processed records, they must not be written out yet
+     */
     private long numRecordsProcessed;
 
-    /** average processing time of a record */
+    /**
+     * average processing time of a record
+     */
     private long averageProcessingTimeMs;
 
-    /** map from recordIDs to DoWorkInfos */
+    /**
+     * map from recordIDs to DoWorkInfos
+     */
     private Map<Long, DoWorkInfo> doWorkInfos = new HashMap<>();
 
-    /** mesage for resend */
+    /**
+     * message for resend
+     */
     private SendAgain resend;
 
-    /** Schedule to cleanup workers */
+    /**
+     * Schedule to cleanup workers
+     */
     private Cancellable cleanupWorkersSchedule;
 
 // ------------------------ CANONICAL METHODS ------------------------
@@ -112,7 +143,7 @@ public class Reader extends AkkaBatchActor {
     private void cleanupWorkers() {
         Map<ActorRef, Long> cleanWorkers = new HashMap<>();
         // 5x registerInterval means timeout
-        long staleTimestamp = System.currentTimeMillis() - (5000 * configApp.getInt("times.registerIntervall"));
+        long staleTimestamp = System.currentTimeMillis() - (5000 * appConfig.getInt("times.registerIntervall"));
         for (Map.Entry<ActorRef, Long> entry : workers.entrySet()) {
             if (entry.getValue() > staleTimestamp) {
                 cleanWorkers.put(entry.getKey(), entry.getValue());
@@ -127,14 +158,13 @@ public class Reader extends AkkaBatchActor {
     /**
      * MessageHandler, initializes the Reader and starts processing
      *
-     * @param message
-     *         init message
+     * @param message init message
      */
     private void initReader(InitReader message) {
         inbox = sender();
         workAvailable = new WorkAvailable();
-        maxNumRecordsInSystem = configApp.getLong("numRecords.inSystem");
-         fillLevel = (maxNumRecordsInSystem * 9) / 10;
+        maxNumRecordsInSystem = appConfig.getLong("numRecords.inSystem");
+        fillLevel = (maxNumRecordsInSystem * 9) / 10;
         workToBeDone.clear();
         actNumRecordsInSystem = 0;
         recordSerialNo = 1;
@@ -152,7 +182,7 @@ public class Reader extends AkkaBatchActor {
             result = false;
         }
         log.info(MessageFormat.format("file: {0}, encoding: {1}, Init-result: {2}", message.getInputFilename(),
-                                      message.getEncoding(), result));
+                message.getEncoding(), result));
         if (!result) {
             sender().tell(new WorkDone(false), getSelf());
         } else {
@@ -160,17 +190,16 @@ public class Reader extends AkkaBatchActor {
             resend = new SendAgain();
             // first resend after 500ms, after that the resend period is calculated dynamically
             getContext().system().scheduler()
-                        .scheduleOnce(Duration.create(500, TimeUnit.MILLISECONDS), getSelf(), resend,
-                                      getContext().dispatcher(),
-                                      null);
+                    .scheduleOnce(Duration.create(500, TimeUnit.MILLISECONDS), getSelf(), resend,
+                            getContext().dispatcher(),
+                            null);
         }
     }
 
     /**
-     * removes the corrsepondign record from the map of potentially resendable records and updates the average processing time
+     * removes the corresponding record from the map of potentially resendable records and updates the average processing time
      *
-     * @param message
-     *         contains the id of the processed record
+     * @param message contains the id of the processed record
      */
     private void recordReceived(RecordReceived message) {
         Long recordId = message.getId();
@@ -186,7 +215,7 @@ public class Reader extends AkkaBatchActor {
                 averageProcessingTimeMs =
                         ((averageProcessingTimeMs * numRecordsProcessed) + duration) / (numRecordsProcessed + 1);
             }
-            if(1 > averageProcessingTimeMs) {
+            if (1 > averageProcessingTimeMs) {
                 averageProcessingTimeMs = 1;
             }
             numRecordsProcessed++;
@@ -196,8 +225,7 @@ public class Reader extends AkkaBatchActor {
     /**
      * MessageHandler, loads new data
      *
-     * @param message
-     *         contains the number of written records
+     * @param message contains the number of written records
      * @throws IOException
      */
     private void recordsWritten(RecordsWritten message) throws IOException {
@@ -217,7 +245,7 @@ public class Reader extends AkkaBatchActor {
      */
     private void fillWorkToBeDone() throws IOException {
         // only fill when there are less than the configured records in the system
-        if(actNumRecordsInSystem >= fillLevel) {
+        if (actNumRecordsInSystem >= fillLevel) {
             return;
         }
         boolean breakout = false;
@@ -273,9 +301,9 @@ public class Reader extends AkkaBatchActor {
 
         // check for resend in thrice the average processing time
         FiniteDuration interval = Duration.create((0 == averageProcessingTimeMs) ? 500 : (3 * averageProcessingTimeMs),
-                                                  TimeUnit.MILLISECONDS);
+                TimeUnit.MILLISECONDS);
         getContext().system().scheduler().scheduleOnce(interval, getSelf(), resend, getContext().dispatcher(),
-                                                       null);
+                null);
     }
 
     /**
@@ -317,14 +345,16 @@ public class Reader extends AkkaBatchActor {
     @Override
     public void preStart() throws Exception {
         super.preStart();
+
         // regular cleanup message
-        cleanupWorkersSchedule = getContext().system().scheduler().schedule(Duration.create(0, TimeUnit.SECONDS),
-                                                                            Duration.create(20 * configApp
-                                                                                                    .getInt("times.registerIntervall"),
-                                                                                            TimeUnit.SECONDS
-                                                                            ), getSelf(),
-                                                                            CLEANUP_WORKERS,
-                                                                            getContext().dispatcher(), getSelf()
-        );
+        cleanupWorkersSchedule = getContext().system().scheduler()
+                .schedule(Duration.create(0, TimeUnit.SECONDS),
+                        Duration.create(20 * appConfig
+                                        .getInt("times.registerIntervall"),
+                                TimeUnit.SECONDS
+                        ), getSelf(),
+                        CLEANUP_WORKERS,
+                        getContext().dispatcher(), getSelf()
+                );
     }
 }

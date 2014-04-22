@@ -31,18 +31,25 @@ public class BatchApp {
 
     /** Logger */
     protected LoggingAdapter log;
+
     /** name of the configuration file */
     private final String configFileName;
+
     /** name of the input file */
     private String infileName = "not_specified";
+
     /** name of the output file */
     private String outfileName = "not_specified";
+
     /** application configuration */
     private Config configApp;
+
     /** the actor system */
     private ActorSystem system;
-    /** the Inbox oject of the actor system */
+
+    /** the Inbox object of the actor system */
     private Inbox inbox;
+
     /** the Reader */
     private ActorRef reader;
 
@@ -54,7 +61,7 @@ public class BatchApp {
      */
     public BatchApp(String[] args) {
         if (null == args || args.length < 1) {
-            throw new IllegalArgumentException("wrong calö; arguments: <config> [<infile> <outfile>]");
+            throw new IllegalArgumentException("wrong call; arguments: <config> [<infile> <outfile>]");
         }
         configFileName = args[0];
         if (args.length > 1) {
@@ -76,7 +83,7 @@ public class BatchApp {
     }
 
     /**
-     * Programmausführung als Methode der BatchApp-Klasse.
+     * Main execution method of BatchApp.
      */
     private void run() {
         try {
@@ -98,6 +105,7 @@ public class BatchApp {
                 initReader();
                 initWriter();
             }
+
             if (runWorker) {
                 initWorkers();
             }
@@ -106,7 +114,9 @@ public class BatchApp {
                 log.debug("starting processing...");
                 inbox.send(reader, new InitReader(infileName, configApp.getString("charset.infile")));
             }
+
             waitForWorkDone();
+
         } catch (AkkaBatchException e) {
             e.printStackTrace();
         } finally {
@@ -117,11 +127,12 @@ public class BatchApp {
     }
 
     /**
-     * reads the configuration
+     * reads the configuration from the file system
      *
      * @return configuration
      */
     private Config getConfig() {
+
         // config from the file system
         Config configFile = ConfigFactory.parseFile(new File(configFileName));
 
@@ -129,6 +140,7 @@ public class BatchApp {
         ConfigParseOptions parseOptions = ConfigParseOptions.defaults();
         ConfigResolveOptions resolveOptions = ConfigResolveOptions.defaults().setAllowUnresolved(true);
         Config configAll = ConfigFactory.load("application", parseOptions, resolveOptions);
+
         // merge and then resolve
         configAll = configFile.withFallback(configAll).resolve();
 
@@ -159,14 +171,16 @@ public class BatchApp {
      * Initiaslizes the Writer
      */
     private void initWriter() throws AkkaBatchException {
-        /* der Writer */
+        /* the Writer */
         ActorRef writer = system.actorOf(Props.create(Writer.class), configApp.getString("names.writer"));
         inbox.send(writer, new InitWriter(outfileName, configApp.getString("charset.outfile")));
+
         log.info("waiting for Writer to be initialized...");
         Object msg = inbox.receive(Duration.create(5, TimeUnit.SECONDS));
+
         if (msg instanceof InitResult) {
             InitResult initResult = (InitResult) msg;
-            if (!initResult.getSuccess()) {
+            if (!initResult.isSuccess()) {
                 throw new AkkaBatchException("Error initializing the Writer");
             }
         } else {
@@ -197,9 +211,8 @@ public class BatchApp {
                 inbox.receive(Duration.create(configApp.getLong("times.maxRunDuration"), TimeUnit.SECONDS));
         long endTime = System.currentTimeMillis();
         if (msg instanceof WorkDone) {
-            System.out.println(
-                    MessageFormat.format("result {0}, Dauer: {1} ms",
-                                         ((WorkDone) msg).getSuccess() ? "OK" : "Error",
+            System.out.println(MessageFormat.format("result {0}, Elapsed time: {1} ms",
+                                         ((WorkDone) msg).isSuccess() ? "OK" : "Error",
                                          endTime - startTime)
             );
         } else {
