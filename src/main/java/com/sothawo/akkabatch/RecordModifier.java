@@ -52,7 +52,7 @@ public class RecordModifier extends AkkaBatchActor {
     public void preStart() throws Exception {
         super.preStart();
         try {
-            dropRatePerMille = configApp.getInt(CONFIG_DROPRATE);
+            dropRatePerMille = appConfig.getInt(CONFIG_DROPRATE);
         } catch (ConfigException e) {
             log.error(e, CONFIG_DROPRATE);
         }
@@ -61,7 +61,7 @@ public class RecordModifier extends AkkaBatchActor {
         numDropped = 0;
 
         // Writer ist im Master
-        String writerPath = configApp.getString("network.master.address") + configApp.getString("names.writerRef");
+        String writerPath = appConfig.getString("network.master.address") + appConfig.getString("names.writerRef");
         log.info("Writer path from configuration: " + writerPath);
         writer = context().actorSelection(writerPath);
         log.info(MessageFormat.format("sending data to {0}, drop rate: {1} 0/00", writer.pathString(), dropRatePerMille));

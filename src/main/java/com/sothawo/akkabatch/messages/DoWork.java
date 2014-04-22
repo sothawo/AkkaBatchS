@@ -11,8 +11,10 @@ public final class DoWork implements Serializable {
 // ------------------------------ FIELDS ------------------------------
 
     public static final long serialVersionUID = 42L;
+
     /** Record-ID */
     private final Long recordId;
+
     /** Original csv value */
     private final String csvOriginal;
 
@@ -25,11 +27,11 @@ public final class DoWork implements Serializable {
 
 // --------------------- GETTER / SETTER METHODS ---------------------
 
-    public String getCsvOriginal() {
-        return csvOriginal;
-    }
-
     public Long getRecordId() {
         return recordId;
+    }
+
+    public String getCsvOriginal() {
+        return csvOriginal;
     }
 }

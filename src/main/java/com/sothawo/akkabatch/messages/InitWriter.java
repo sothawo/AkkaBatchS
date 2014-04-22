@@ -9,7 +9,7 @@
 package com.sothawo.akkabatch.messages;
 
 /**
- * Mesage to initialize the Writer.
+ * Message to initialize the Writer.
  *
  * @author P.J.Meisch (pj.meisch@jaroso.de)
  */
@@ -17,8 +17,10 @@ public final class InitWriter {
 // ------------------------------ FIELDS ------------------------------
 
     public static final long serialVersionUID = 42L;
+
     /** Name of the output file */
     private final String outputFilename;
+
     /** Encoding of the ouput file */
     private final String encoding;
 
@@ -31,11 +33,11 @@ public final class InitWriter {
 
 // --------------------- GETTER / SETTER METHODS ---------------------
 
-    public String getEncoding() {
-        return encoding;
-    }
-
     public String getOutputFilename() {
         return outputFilename;
+    }
+
+    public String getEncoding() {
+        return encoding;
     }
 }

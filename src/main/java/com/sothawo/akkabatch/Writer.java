@@ -23,18 +23,22 @@ public class Writer extends AkkaBatchActor {
      * Logger
      */
     final LoggingAdapter log = Logging.getLogger(getContext().system(), this);
+
     /**
      * to write the output
      */
     private PrintWriter writer;
+
     /**
      * Reader-actor
      */
     private ActorSelection reader;
+
     /**
      * Buffer als TreeMap, because we need sorted access to the data
      */
     private final TreeMap<Long, ProcessRecord> outputBuffer = new TreeMap<>();
+
     /**
      * recordId of the next record in the output file
      */
@@ -117,7 +121,7 @@ public class Writer extends AkkaBatchActor {
     @Override
     public void preStart() throws Exception {
         super.preStart();
-        reader = getContext().actorSelection(configApp.getString("names.readerRef"));
+        reader = getContext().actorSelection(appConfig.getString("names.readerRef"));
         log.debug(MessageFormat.format("sending infos to {0}", reader.pathString()));
     }
 }

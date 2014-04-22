@@ -19,17 +19,17 @@ public final class RecordReceived {
     public static final long serialVersionUID = 42L;
 
     /** Id of the received record */
-    private final Long id;
+    private final long id;
 
 // --------------------------- CONSTRUCTORS ---------------------------
 
-    public RecordReceived(Long id) {
+    public RecordReceived(long id) {
         this.id = id;
     }
 
 // --------------------- GETTER / SETTER METHODS ---------------------
 
-    public Long getId() {
+    public long getId() {
         return id;
     }
 }

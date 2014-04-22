@@ -11,6 +11,7 @@ public final class InitResult implements Serializable {
 // ------------------------------ FIELDS ------------------------------
 
     public static final long serialVersionUID = 42L;
+
     /** success flag */
     private final Boolean success;
 
@@ -22,7 +23,7 @@ public final class InitResult implements Serializable {
 
 // --------------------- GETTER / SETTER METHODS ---------------------
 
-    public Boolean getSuccess() {
+    public Boolean isSuccess() {
         return success;
     }
 }

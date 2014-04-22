@@ -5,7 +5,7 @@ import com.sothawo.akkabatch.Record;
 import java.io.Serializable;
 
 /**
- * Message conatining the record to process.
+ * Message containing the record to process.
  *
  * @author P.J. Meisch (pj.meisch@sothawo.com).
  */
@@ -16,14 +16,16 @@ public final class ProcessRecord implements Serializable {
 
     /** Record-ID */
     private final Long recordId;
-    /** Original csv Wert */
+
+    /** Original csv line */
     private final String csvOriginal;
-    /** der eigentliche Record */
+
+    /** Processed record instance */
     private final Record record;
 
 // --------------------------- CONSTRUCTORS ---------------------------
 
-    public ProcessRecord(Long recordId, String csvOriginal, Record record) {
+    public ProcessRecord(final long recordId, final String csvOriginal, final Record record) {
         this.recordId = recordId;
         this.csvOriginal = csvOriginal;
         this.record = record;
@@ -31,15 +33,15 @@ public final class ProcessRecord implements Serializable {
 
 // --------------------- GETTER / SETTER METHODS ---------------------
 
+    public Long getRecordId() {
+        return recordId;
+    }
+
     public String getCsvOriginal() {
         return csvOriginal;
     }
 
     public Record getRecord() {
         return record;
-    }
-
-    public Long getRecordId() {
-        return recordId;
     }
 }

@@ -25,16 +25,31 @@ public class CSV2Record extends AkkaBatchActor {
 // ------------------------------ FIELDS ------------------------------
 
     protected static final String REGISTER = "register";
-    /** actor for the next processing step */
+
+    /**
+     * actor for the next processing step
+     */
     private ActorSelection recordModifier;
-    /** Register message */
+
+    /**
+     * Register message
+     */
     private final Register register = new Register();
-    /** GetWork message */
+
+    /**
+     * GetWork message
+     */
     private final GetWork getWork = new GetWork();
-    /** the Reader, where work is pulled from */
+
+    /**
+     * the Reader, where work is pulled from
+     */
     private ActorSelection reader;
-    /** Scheduler object for the registration */
-    private Cancellable registerSchedule = null;
+
+    /**
+     * Scheduler object for the registration
+     */
+    private Cancellable registerSchedule;
 
 // ------------------------ CANONICAL METHODS ------------------------
 
@@ -54,15 +69,18 @@ public class CSV2Record extends AkkaBatchActor {
     /**
      * does the work
      *
-     * @param doWork
-     *         work to be done
+     * @param doWork work to be done
      */
     private void doWork(DoWork doWork) {
         // convert into a Record and send it off
-        recordModifier.tell(new ProcessRecord(doWork.getRecordId(), doWork.getCsvOriginal(),
-                                              Record.fromLine(doWork.getCsvOriginal())), getSelf());
+        ProcessRecord message = new ProcessRecord(doWork.getRecordId(), doWork.getCsvOriginal(),
+                Record.fromLine(doWork.getCsvOriginal()));
+
+        recordModifier.tell(message, getSelf());
+
         // use some time
         RecordProcessor.useTime();
+
         // ask for more work
         sender().tell(getWork, getSelf());
     }
@@ -80,24 +98,23 @@ public class CSV2Record extends AkkaBatchActor {
     public void preStart() throws Exception {
         super.preStart();
 
-        // Reader istfound on the master host
-        String readerPath = configApp.getString("network.master.address") + configApp.getString("names.readerRef");
+        // Reader is found on the master host
+        String readerPath = appConfig.getString("network.master.address") + appConfig.getString("names.readerRef");
         log.info("Reader path from configuration: " + readerPath);
         reader = getContext().actorSelection(readerPath);
 
         // RecordModifier is in the same host
-        recordModifier = getContext().actorSelection(configApp.getString("names.recordModifierRef"));
+        recordModifier = getContext().actorSelection(appConfig.getString("names.recordModifierRef"));
         log.info(MessageFormat.format("get data from {0}, send data to {1}", reader.pathString(),
-                                      recordModifier.pathString()));
+                recordModifier.pathString()));
 
-        // frepeated message to myself to reregister with the Reader
-        registerSchedule = getContext().system().scheduler().schedule(Duration.create(0, TimeUnit.SECONDS),
-                                                                      Duration.create(configApp
-                                                                                              .getInt("times.registerIntervall"),
-                                                                                      TimeUnit.SECONDS
-                                                                      ), getSelf(),
-                                                                      REGISTER,
-                                                                      getContext().dispatcher(), getSelf()
-        );
+        // repeated message to myself to re-register with the Reader
+        registerSchedule = getContext().system().scheduler()
+                .schedule(Duration.create(0, TimeUnit.SECONDS),
+                        Duration.create(appConfig.getInt("times.registerIntervall"), TimeUnit.SECONDS),
+                        getSelf(),
+                        REGISTER,
+                        getContext().dispatcher(), getSelf()
+                );
     }
 }

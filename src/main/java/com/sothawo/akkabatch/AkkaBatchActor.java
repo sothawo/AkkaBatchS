@@ -9,8 +9,8 @@
 package com.sothawo.akkabatch;
 
 import akka.actor.UntypedActor;
+import akka.event.DiagnosticLoggingAdapter;
 import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import com.typesafe.config.Config;
 
 /**
@@ -22,18 +22,20 @@ public abstract class AkkaBatchActor extends UntypedActor {
 // ------------------------------ FIELDS ------------------------------
 
     /** Logger */
-    protected final LoggingAdapter log = Logging.getLogger(getContext().system(), this);
+    protected final DiagnosticLoggingAdapter log = Logging.getLogger(this);
+
     /** global configuration object */
-    protected Config configAll;
+    protected Config globalConfig;
+
     /** application configuration */
-    protected Config configApp;
+    protected Config appConfig;
 
 // ------------------------ CANONICAL METHODS ------------------------
 
     @Override
     public void preStart() throws Exception {
         super.preStart();
-        configAll = context().system().settings().config();
-        configApp = configAll.getConfig("com.sothawo.akkabatch");
+        globalConfig = context().system().settings().config();
+        appConfig = globalConfig.getConfig("com.sothawo.akkabatch");
     }
 }

@@ -17,25 +17,27 @@ public final class InitReader {
 // ------------------------------ FIELDS ------------------------------
 
     public static final long serialVersionUID = 42L;
+
     /** Name of the input file */
     private final String inputFilename;
+
     /** Encoding of the input file */
     private final String encoding;
 
 // --------------------------- CONSTRUCTORS ---------------------------
 
-    public InitReader(String inputFilename, String encoding) {
+    public InitReader(final String inputFilename, final String encoding) {
         this.inputFilename = inputFilename;
         this.encoding = encoding;
     }
 
 // --------------------- GETTER / SETTER METHODS ---------------------
 
-    public String getEncoding() {
-        return encoding;
-    }
-
     public String getInputFilename() {
         return inputFilename;
+    }
+
+    public String getEncoding() {
+        return encoding;
     }
 }

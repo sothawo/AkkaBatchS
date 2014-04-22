@@ -20,6 +20,7 @@ public class BatchAppSerial {
 
     /** name of the input file */
     private final String infileName;
+
     /** name of the output file */
     private final String outfileName;
 
@@ -66,10 +67,12 @@ public class BatchAppSerial {
         long startTime = System.currentTimeMillis();
 
         String line = reader.readLine();
+
         while (null != line) {
             numRecords++;
             ProcessRecord processRecord = new ProcessRecord(numRecords, line,
-                                                            RecordProcessor.processRecord(Record.fromLine(line)));
+                    RecordProcessor.processRecord(Record.fromLine(line)));
+
             writer.println(processRecord.getCsvOriginal());
             if (0 == (numRecords % 10000)) {
                 System.out.println(MessageFormat.format("processed: {0}: ", numRecords));
