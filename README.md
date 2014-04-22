@@ -101,3 +101,8 @@ This actor does the processing of the record.
 ### outgoing messages
 - ProcessRecord (contains the processed record), is sent to the Writer.
 
+# building and running the program
+
+this is a maven project where the maven appassembler plugin is configured to run during the package phase. So a simple
+ *mvn package* command builds the whole stuff and creates a directory *target/AkkaBatch*. The bin subdirectory
+ contains scripts for starting the program, the etc subdirectoy contains the akkabatch.conf configuration file.
