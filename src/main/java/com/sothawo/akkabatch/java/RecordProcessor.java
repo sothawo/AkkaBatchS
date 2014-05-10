@@ -1,5 +1,6 @@
 package com.sothawo.akkabatch.java;
 
+import com.sothawo.akkabatch.scala.Fibonacci;
 import com.sothawo.akkabatch.scala.Record;
 
 import java.util.Random;

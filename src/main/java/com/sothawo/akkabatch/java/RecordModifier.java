@@ -20,7 +20,7 @@ public class RecordModifier extends AkkaBatchActor {
     private static Random random = new Random();
     /** the Writer */
     private ActorSelection writer;
-    /** Adrop rate per thousand */
+    /** drop rate per thousand */
     private int dropRatePerMille = 0;
     private long numProcessed;
     private long numDropped;
