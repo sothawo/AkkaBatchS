@@ -4,6 +4,9 @@ import akka.actor.ActorSelection;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import com.sothawo.akkabatch.java.messages.*;
+import com.sothawo.akkabatch.scala.messages.InitResult;
+import com.sothawo.akkabatch.scala.messages.RecordReceived;
+import com.sothawo.akkabatch.scala.messages.RecordsWritten;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;

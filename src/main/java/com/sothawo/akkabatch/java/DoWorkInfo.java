@@ -8,7 +8,8 @@
  */
 package com.sothawo.akkabatch.java;
 
-import com.sothawo.akkabatch.java.messages.DoWork;
+
+import com.sothawo.akkabatch.scala.messages.DoWork;
 
 /**
  * Information about a DoWork message during processing.
