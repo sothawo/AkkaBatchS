@@ -11,6 +11,7 @@ package com.sothawo.akkabatch.java;
 import akka.actor.ActorSelection;
 import akka.actor.Cancellable;
 import com.sothawo.akkabatch.java.messages.ProcessRecord;
+import com.sothawo.akkabatch.scala.Record;
 import com.sothawo.akkabatch.scala.messages.DoWork;
 import com.sothawo.akkabatch.scala.messages.GetWork;
 import com.sothawo.akkabatch.scala.messages.Register;
@@ -79,7 +80,7 @@ public class CSV2Record extends AkkaBatchActor {
     private void doWork(DoWork doWork) {
         // convert into a Record and send it off
         ProcessRecord message = new ProcessRecord(doWork.getRecordId(), doWork.getCsvOriginal(),
-                Record.fromLine(doWork.getCsvOriginal()));
+                Record.apply(doWork.getCsvOriginal()));
 
         recordModifier.tell(message, getSelf());
 

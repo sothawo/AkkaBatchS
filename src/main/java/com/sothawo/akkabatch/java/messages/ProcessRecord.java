@@ -1,6 +1,6 @@
 package com.sothawo.akkabatch.java.messages;
 
-import com.sothawo.akkabatch.java.Record;
+import com.sothawo.akkabatch.scala.Record;
 
 import java.io.Serializable;
 
