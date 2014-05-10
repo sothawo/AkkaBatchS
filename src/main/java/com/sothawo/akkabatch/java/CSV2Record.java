@@ -10,6 +10,11 @@ package com.sothawo.akkabatch.java;
 
 import akka.actor.ActorSelection;
 import akka.actor.Cancellable;
+import com.sothawo.akkabatch.java.messages.DoWork;
+import com.sothawo.akkabatch.java.messages.ProcessRecord;
+import com.sothawo.akkabatch.scala.messages.GetWork;
+import com.sothawo.akkabatch.scala.messages.Register;
+import com.sothawo.akkabatch.scala.messages.WorkAvailable;
 import scala.concurrent.duration.Duration;
 
 import java.text.MessageFormat;
