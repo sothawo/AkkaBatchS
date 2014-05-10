@@ -10,6 +10,7 @@ package com.sothawo.akkabatch.java;
 
 import akka.actor.ActorRef;
 import akka.actor.Cancellable;
+import com.sothawo.akkabatch.scala.DoWorkInfo;
 import com.sothawo.akkabatch.scala.messages.*;
 import scala.concurrent.duration.Duration;
 import scala.concurrent.duration.FiniteDuration;

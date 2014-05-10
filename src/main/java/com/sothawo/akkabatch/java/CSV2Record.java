@@ -11,6 +11,7 @@ package com.sothawo.akkabatch.java;
 import akka.actor.ActorSelection;
 import akka.actor.Cancellable;
 import com.sothawo.akkabatch.scala.Record;
+import com.sothawo.akkabatch.scala.RecordProcessor;
 import com.sothawo.akkabatch.scala.messages.*;
 import scala.concurrent.duration.Duration;
 

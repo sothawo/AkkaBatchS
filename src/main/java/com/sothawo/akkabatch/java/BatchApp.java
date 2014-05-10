@@ -7,6 +7,8 @@ import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.routing.FromConfig;
+import com.sothawo.akkabatch.scala.AkkaBatchException;
+import com.sothawo.akkabatch.scala.RecordProcessor;
 import com.sothawo.akkabatch.scala.messages.InitReader;
 import com.sothawo.akkabatch.scala.messages.InitResult;
 import com.sothawo.akkabatch.scala.messages.InitWriter;
@@ -92,10 +94,10 @@ public class BatchApp {
 
             initAkka(configAll);
 
-            RecordProcessor.fibonacci = configApp.getInt("simulation.fibonacci");
-            RecordProcessor.threadsleep = configApp.getInt("simulation.threadsleep");
-            log.info(MessageFormat.format("Simulation: Fibonacci {0}, ThreadSleep {1}", RecordProcessor.fibonacci,
-                    RecordProcessor.threadsleep));
+            RecordProcessor.setFibonacci(configApp.getInt("simulation.fibonacci"));
+            RecordProcessor.setThreadsleep(configApp.getInt("simulation.threadsleep"));
+            log.info(MessageFormat.format("Simulation: Fibonacci {0}, ThreadSleep {1}", RecordProcessor.getFibonacci(),
+                    RecordProcessor.getThreadsleep()));
 
             boolean runMaster = configApp.getBoolean("modules.master");
             boolean runWorker = configApp.getBoolean("modules.worker");

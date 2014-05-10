@@ -1,7 +1,7 @@
 package com.sothawo.akkabatch.java.serial;
 
-import com.sothawo.akkabatch.java.RecordProcessor;
 import com.sothawo.akkabatch.scala.Record;
+import com.sothawo.akkabatch.scala.RecordProcessor;
 import com.sothawo.akkabatch.scala.messages.ProcessRecord;
 
 import java.io.BufferedReader;

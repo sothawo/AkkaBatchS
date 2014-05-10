@@ -1,6 +1,7 @@
 package com.sothawo.akkabatch.java;
 
 import akka.actor.ActorSelection;
+import com.sothawo.akkabatch.scala.RecordProcessor;
 import com.sothawo.akkabatch.scala.messages.ProcessRecord;
 import com.typesafe.config.ConfigException;
 
