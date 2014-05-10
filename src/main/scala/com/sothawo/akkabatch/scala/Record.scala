@@ -6,7 +6,15 @@ import scala.beans.BeanProperty
  * @author P.J. Meisch (pj.meisch@sothawo.com).
  */
 
+/**
+ * Record companion object.
+ */
 object Record {
+  /**
+   * creates a Record object from a csv line
+   * @param line the csv line
+   * @return the new Record
+   */
   def apply(line: String) = {
     if (null == line) {
       throw new IllegalArgumentException("record from null")
@@ -22,6 +30,18 @@ object Record {
   }
 }
 
+/**
+ * Record case class
+ * @param id
+ * @param sex
+ * @param firstname
+ * @param lastname
+ * @param zip
+ * @param city
+ * @param district
+ * @param street
+ * @param number
+ */
 case class Record(@BeanProperty id: String, @BeanProperty sex: String, @BeanProperty firstname: String,
                   @BeanProperty lastname: String, @BeanProperty zip: String, @BeanProperty city: String,
                   @BeanProperty district: String, @BeanProperty street: String, @BeanProperty number: String)

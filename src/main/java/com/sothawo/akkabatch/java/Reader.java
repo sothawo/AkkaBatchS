@@ -206,7 +206,7 @@ public class Reader extends AkkaBatchActor {
      *         contains the id of the processed record
      */
     private void recordReceived(RecordReceived message) {
-        Long recordId = message.getId();
+        Long recordId = message.getRecordId();
         DoWorkInfo doWorkInfo = doWorkInfos.get(recordId);
         if (null != doWorkInfo) {
             doWorkInfos.remove(recordId);
