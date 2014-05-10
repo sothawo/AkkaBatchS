@@ -73,7 +73,8 @@ public class CSV2Record extends AkkaBatchActor {
     /**
      * does the work
      *
-     * @param doWork work to be done
+     * @param doWork
+     *         work to be done
      */
     private void doWork(DoWork doWork) {
         // convert into a Record and send it off

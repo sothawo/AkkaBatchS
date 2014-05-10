@@ -162,7 +162,8 @@ public class Reader extends AkkaBatchActor {
     /**
      * MessageHandler, initializes the Reader and starts processing
      *
-     * @param message init message
+     * @param message
+     *         init message
      */
     private void initReader(InitReader message) {
         inbox = sender();
@@ -201,9 +202,11 @@ public class Reader extends AkkaBatchActor {
     }
 
     /**
-     * removes the corresponding record from the map of potentially resendable records and updates the average processing time
+     * removes the corresponding record from the map of potentially resendable records and updates the average
+     * processing time
      *
-     * @param message contains the id of the processed record
+     * @param message
+     *         contains the id of the processed record
      */
     private void recordReceived(RecordReceived message) {
         Long recordId = message.getId();
@@ -229,7 +232,8 @@ public class Reader extends AkkaBatchActor {
     /**
      * MessageHandler, loads new data
      *
-     * @param message contains the number of written records
+     * @param message
+     *         contains the number of written records
      * @throws IOException
      */
     private void recordsWritten(RecordsWritten message) throws IOException {

@@ -95,7 +95,7 @@ public class BatchApp {
             RecordProcessor.fibonacci = configApp.getInt("simulation.fibonacci");
             RecordProcessor.threadsleep = configApp.getInt("simulation.threadsleep");
             log.info(MessageFormat.format("Simulation: Fibonacci {0}, ThreadSleep {1}", RecordProcessor.fibonacci,
-                                          RecordProcessor.threadsleep));
+                    RecordProcessor.threadsleep));
 
             boolean runMaster = configApp.getBoolean("modules.master");
             boolean runWorker = configApp.getBoolean("modules.worker");
@@ -194,9 +194,9 @@ public class BatchApp {
      */
     private void initWorkers() {
         system.actorOf(FromConfig.getInstance().props(Props.create(RecordModifier.class)),
-                       configApp.getString("names.recordModifier"));
+                configApp.getString("names.recordModifier"));
         system.actorOf(FromConfig.getInstance().props(Props.create(CSV2Record.class)),
-                       configApp.getString("names.csv2Record"));
+                configApp.getString("names.csv2Record"));
     }
 
     /**
@@ -212,8 +212,8 @@ public class BatchApp {
         long endTime = System.currentTimeMillis();
         if (msg instanceof WorkDone) {
             System.out.println(MessageFormat.format("result {0}, Elapsed time: {1} ms",
-                                         ((WorkDone) msg).isSuccess() ? "OK" : "Error",
-                                         endTime - startTime)
+                            ((WorkDone) msg).isSuccess() ? "OK" : "Error",
+                            endTime - startTime)
             );
         } else {
             throw new AkkaBatchException(

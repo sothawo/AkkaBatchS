@@ -104,7 +104,7 @@ public class Writer extends AkkaBatchActor {
         outputBuffer.clear();
         nextRecordId = 1;
         log.info(MessageFormat.format("file: {0}, encoding: {1}, Init-result: {2}", message.getOutputFilename(),
-                                      message.getEncoding(), result));
+                message.getEncoding(), result));
         sender().tell(new InitResult(result), getSelf());
     }
 
