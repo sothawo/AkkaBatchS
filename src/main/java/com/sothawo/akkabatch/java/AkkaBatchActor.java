@@ -6,7 +6,7 @@
  * http://www.jaroso.de
  *
  */
-package com.sothawo.akkabatch;
+package com.sothawo.akkabatch.java;
 
 import akka.actor.UntypedActor;
 import akka.event.DiagnosticLoggingAdapter;

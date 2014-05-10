@@ -99,7 +99,7 @@
                     <repositoryName>lib</repositoryName>
                     <programs>
                         <program>
-                            <mainClass>com.sothawo.akkabatch.BatchApp</mainClass>
+                            <mainClass>com.sothawo.akkabatch.java.BatchApp</mainClass>
                             <commandLineArguments>
                                 <commandLineArgument>"$BASEDIR"/etc/akkabatch.conf</commandLineArgument>
                             </commandLineArguments>

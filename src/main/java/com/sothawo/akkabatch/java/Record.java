@@ -1,4 +1,4 @@
-package com.sothawo.akkabatch;
+package com.sothawo.akkabatch.java;
 
 import java.io.Serializable;
 

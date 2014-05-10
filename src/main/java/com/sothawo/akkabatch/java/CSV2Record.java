@@ -6,11 +6,10 @@
  * http://www.jaroso.de
  *
  */
-package com.sothawo.akkabatch;
+package com.sothawo.akkabatch.java;
 
 import akka.actor.ActorSelection;
 import akka.actor.Cancellable;
-import com.sothawo.akkabatch.messages.*;
 import scala.concurrent.duration.Duration;
 
 import java.text.MessageFormat;

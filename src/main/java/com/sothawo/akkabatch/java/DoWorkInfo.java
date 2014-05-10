@@ -6,9 +6,9 @@
  * http://www.jaroso.de
  *
  */
-package com.sothawo.akkabatch;
+package com.sothawo.akkabatch.java;
 
-import com.sothawo.akkabatch.messages.DoWork;
+import com.sothawo.akkabatch.java.messages.DoWork;
 
 /**
  * Information about a DoWork message during processing.

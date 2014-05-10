@@ -6,35 +6,35 @@
  * http://www.jaroso.de
  *
  */
-package com.sothawo.akkabatch.messages;
+package com.sothawo.akkabatch.java.messages;
 
 /**
- * Message to initialize the Reader.
+ * Message to initialize the Writer.
  *
  * @author P.J.Meisch (pj.meisch@jaroso.de)
  */
-public final class InitReader {
+public final class InitWriter {
 // ------------------------------ FIELDS ------------------------------
 
     public static final long serialVersionUID = 42L;
 
-    /** Name of the input file */
-    private final String inputFilename;
+    /** Name of the output file */
+    private final String outputFilename;
 
-    /** Encoding of the input file */
+    /** Encoding of the ouput file */
     private final String encoding;
 
 // --------------------------- CONSTRUCTORS ---------------------------
 
-    public InitReader(final String inputFilename, final String encoding) {
-        this.inputFilename = inputFilename;
+    public InitWriter(String outputFilename, String encoding) {
+        this.outputFilename = outputFilename;
         this.encoding = encoding;
     }
 
 // --------------------- GETTER / SETTER METHODS ---------------------
 
-    public String getInputFilename() {
-        return inputFilename;
+    public String getOutputFilename() {
+        return outputFilename;
     }
 
     public String getEncoding() {

@@ -1,8 +1,8 @@
-package com.sothawo.akkabatch.serial;
+package com.sothawo.akkabatch.java.serial;
 
-import com.sothawo.akkabatch.Record;
-import com.sothawo.akkabatch.RecordProcessor;
-import com.sothawo.akkabatch.messages.ProcessRecord;
+import com.sothawo.akkabatch.java.Record;
+import com.sothawo.akkabatch.java.RecordProcessor;
+import com.sothawo.akkabatch.java.messages.ProcessRecord;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;

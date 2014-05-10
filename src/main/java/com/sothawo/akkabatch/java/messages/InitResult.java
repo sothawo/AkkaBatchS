@@ -1,4 +1,4 @@
-package com.sothawo.akkabatch.messages;
+package com.sothawo.akkabatch.java.messages;
 
 import java.io.Serializable;
 

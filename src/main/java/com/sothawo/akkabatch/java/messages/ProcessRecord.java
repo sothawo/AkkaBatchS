@@ -1,13 +1,15 @@
-package com.sothawo.akkabatch.messages;
+package com.sothawo.akkabatch.java.messages;
+
+import com.sothawo.akkabatch.java.Record;
 
 import java.io.Serializable;
 
 /**
- * Message with the work to be done; sent from the Reader.
+ * Message containing the record to process.
  *
  * @author P.J. Meisch (pj.meisch@sothawo.com).
  */
-public final class DoWork implements Serializable {
+public final class ProcessRecord implements Serializable {
 // ------------------------------ FIELDS ------------------------------
 
     public static final long serialVersionUID = 42L;
@@ -15,14 +17,18 @@ public final class DoWork implements Serializable {
     /** Record-ID */
     private final Long recordId;
 
-    /** Original csv value */
+    /** Original csv line */
     private final String csvOriginal;
+
+    /** Processed record instance */
+    private final Record record;
 
 // --------------------------- CONSTRUCTORS ---------------------------
 
-    public DoWork(Long recordId, String csvOriginal) {
+    public ProcessRecord(final long recordId, final String csvOriginal, final Record record) {
         this.recordId = recordId;
         this.csvOriginal = csvOriginal;
+        this.record = record;
     }
 
 // --------------------- GETTER / SETTER METHODS ---------------------
@@ -33,5 +39,9 @@ public final class DoWork implements Serializable {
 
     public String getCsvOriginal() {
         return csvOriginal;
+    }
+
+    public Record getRecord() {
+        return record;
     }
 }

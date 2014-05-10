@@ -1,4 +1,4 @@
-package com.sothawo.akkabatch;
+package com.sothawo.akkabatch.java;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
@@ -7,10 +7,10 @@ import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.routing.FromConfig;
-import com.sothawo.akkabatch.messages.InitReader;
-import com.sothawo.akkabatch.messages.InitResult;
-import com.sothawo.akkabatch.messages.InitWriter;
-import com.sothawo.akkabatch.messages.WorkDone;
+import com.sothawo.akkabatch.java.messages.InitReader;
+import com.sothawo.akkabatch.java.messages.InitResult;
+import com.sothawo.akkabatch.java.messages.InitWriter;
+import com.sothawo.akkabatch.java.messages.WorkDone;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;

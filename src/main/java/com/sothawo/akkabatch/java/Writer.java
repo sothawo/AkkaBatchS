@@ -1,9 +1,8 @@
-package com.sothawo.akkabatch;
+package com.sothawo.akkabatch.java;
 
 import akka.actor.ActorSelection;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import com.sothawo.akkabatch.messages.*;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;

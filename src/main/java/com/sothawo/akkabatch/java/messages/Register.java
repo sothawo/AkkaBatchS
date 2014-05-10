@@ -1,13 +1,13 @@
-package com.sothawo.akkabatch.messages;
+package com.sothawo.akkabatch.java.messages;
 
 import java.io.Serializable;
 
 /**
- * Message from the Reader that data to be processed is available.
+ * Message for registration with the Reader.
  *
  * @author P.J. Meisch (pj.meisch@sothawo.com).
  */
-public class WorkAvailable implements Serializable {
+public final class Register implements Serializable {
 // ------------------------------ FIELDS ------------------------------
 
     public static final long serialVersionUID = 42L;

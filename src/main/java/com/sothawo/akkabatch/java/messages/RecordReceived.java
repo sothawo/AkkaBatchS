@@ -6,30 +6,30 @@
  * http://www.jaroso.de
  *
  */
-package com.sothawo.akkabatch.messages;
+package com.sothawo.akkabatch.java.messages;
 
 /**
- * Message from the Writer that a certain amount of data was written to the output.
+ * Message from the Writer to the Reader that data was received.
  *
  * @author P.J.Meisch (pj.meisch@jaroso.de)
  */
-public final class RecordsWritten {
+public final class RecordReceived {
 // ------------------------------ FIELDS ------------------------------
 
     public static final long serialVersionUID = 42L;
 
-    /** number of written records */
-    private final Long numRecords;
+    /** Id of the received record */
+    private final long id;
 
 // --------------------------- CONSTRUCTORS ---------------------------
 
-    public RecordsWritten(Long numRecords) {
-        this.numRecords = numRecords;
+    public RecordReceived(long id) {
+        this.id = id;
     }
 
 // --------------------- GETTER / SETTER METHODS ---------------------
 
-    public Long getNumRecords() {
-        return numRecords;
+    public long getId() {
+        return id;
     }
 }
