@@ -8,6 +8,7 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.routing.FromConfig;
 import com.sothawo.akkabatch.scala.AkkaBatchException;
+import com.sothawo.akkabatch.scala.CSV2Record;
 import com.sothawo.akkabatch.scala.RecordModifier;
 import com.sothawo.akkabatch.scala.RecordProcessor;
 import com.sothawo.akkabatch.scala.messages.InitReader;

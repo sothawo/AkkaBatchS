@@ -8,7 +8,7 @@ import scala.util.Random
 /**
  * @author P.J. Meisch (pj.meisch@sothawo.com).
  */
-class RecordModifier extends AkkabatchActor {
+class RecordModifier extends AkkaBatchActor {
 
   protected final val CONFIG_DROPRATE: String = "simulation.recordModifier.droprate"
 
@@ -23,14 +23,12 @@ class RecordModifier extends AkkabatchActor {
   private var numDropped: Long = _
 
   override def preStart(): Unit = {
-    super.preStart
+    super.preStart()
 
     try {
       dropRatePerMille = appConfig.getInt(CONFIG_DROPRATE)
     } catch {
-      case e: ConfigException => {
-        log.error(e, CONFIG_DROPRATE)
-      }
+      case e: ConfigException => log.error(e, CONFIG_DROPRATE)
     }
 
     numProcessed = 0
@@ -38,22 +36,21 @@ class RecordModifier extends AkkabatchActor {
 
     // Writer is in Master
     val writerPath: String = appConfig.getString("network.master.address") + appConfig.getString("names.writerRef")
-    log.info(s"Writer path from configuration: $writerPath")
     writer = context.actorSelection(writerPath)
-    val actWriterPath = writer.pathString
-    log.info(s"sending data to $actWriterPath, drop rate: $dropRatePerMille 0/00")
+
+    log.info(s"Writer path from configuration: $writerPath")
+    log.info(s"sending data to ${writer.pathString}, drop rate: $dropRatePerMille 0/00")
   }
 
-  override def postStop {
+  override def postStop() {
     log.debug(s"processed: $numProcessed, dropped: $numDropped")
-    super.postStop
+    super.postStop()
   }
 
   def receive = {
-    case processRecordMsg: ProcessRecord => {
+    case msg: ProcessRecord => {
       if (dropRatePerMille == 0 || Random.nextInt(1000) >= dropRatePerMille) {
-        writer ! ProcessRecord(processRecordMsg.getRecordId, processRecordMsg.getCsvOriginal,
-          RecordProcessor.processRecord(processRecordMsg.getRecord))
+        writer ! ProcessRecord(msg.getRecordId, msg.getCsvOriginal, RecordProcessor.processRecord(msg.getRecord))
         numProcessed += 1
       } else {
         numDropped += 1
