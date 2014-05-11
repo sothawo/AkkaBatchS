@@ -9,7 +9,7 @@ import com.typesafe.config.Config
  *
  * @author P.J. Meisch (pj.meisch@sothawo.com).
  */
-abstract class AkkabatchActor extends Actor {
+abstract class AkkaBatchActor extends Actor {
 
   /** Logger */
   protected val log = Logging(context.system, this)
