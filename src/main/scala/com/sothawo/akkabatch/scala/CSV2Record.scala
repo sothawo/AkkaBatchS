@@ -68,7 +68,7 @@ class CSV2Record extends AkkaBatchActor {
    *
    * @param msg work to be done
    */
-  def doWork(msg: DoWork) = {
+  private def doWork(msg: DoWork) = {
     // convert into a Record and send it off in a ProcessRecord message
     recordModifier ! ProcessRecord(msg.getRecordId, msg.getCsvOriginal, Record(msg.getCsvOriginal))
 
