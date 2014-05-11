@@ -36,7 +36,7 @@ class RecordModifier extends AkkabatchActor {
     numProcessed = 0
     numDropped = 0
 
-    // Writer ist im Master
+    // Writer is in Master
     val writerPath: String = appConfig.getString("network.master.address") + appConfig.getString("names.writerRef")
     log.info(s"Writer path from configuration: $writerPath")
     writer = context.actorSelection(writerPath)
