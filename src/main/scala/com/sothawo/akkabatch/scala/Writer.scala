@@ -34,8 +34,8 @@ class Writer extends AkkaBatchActor {
 
   override def postStop() {
     if (null != writer) {
-      writer.flush
-      writer.close
+      writer.flush()
+      writer.close()
       writer = null
     }
     super.postStop()
