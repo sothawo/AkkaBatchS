@@ -1,6 +1,6 @@
 package com.sothawo.akkabatch.scala
 
-import akka.actor.ActorSelection
+import akka.actor.{Props, ActorSelection}
 import com.typesafe.config.ConfigException
 import com.sothawo.akkabatch.scala.messages.ProcessRecord
 import scala.util.Random
@@ -10,21 +10,20 @@ import scala.util.Random
  */
 class RecordModifier extends AkkaBatchActor {
 
-  protected final val CONFIG_DROPRATE: String = "simulation.recordModifier.droprate"
+  protected val CONFIG_DROPRATE = "simulation.recordModifier.droprate"
 
   /** the Writer */
   private var writer: ActorSelection = null
 
   /** drop rate per thousand */
-  private var dropRatePerMille: Int = 0
+  private var dropRatePerMille = 0
 
   private var numProcessed: Long = _
 
   private var numDropped: Long = _
 
-  override def preStart(): Unit = {
+  override def preStart() {
     super.preStart()
-
     try {
       dropRatePerMille = appConfig.getInt(CONFIG_DROPRATE)
     } catch {
@@ -35,7 +34,7 @@ class RecordModifier extends AkkaBatchActor {
     numDropped = 0
 
     // Writer is in Master
-    val writerPath: String = appConfig.getString("network.master.address") + appConfig.getString("names.writerRef")
+    val writerPath = appConfig.getString("network.master.address") + appConfig.getString("names.writerRef")
     writer = context.actorSelection(writerPath)
 
     log.info(s"Writer path from configuration: $writerPath")
@@ -57,5 +56,8 @@ class RecordModifier extends AkkaBatchActor {
       }
     }
   }
+}
 
+object RecordModifier {
+  def props() = Props(new RecordModifier())
 }

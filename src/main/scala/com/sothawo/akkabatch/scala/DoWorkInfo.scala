@@ -8,13 +8,13 @@ import scala.beans.BeanProperty
  *
  * @param doWork the DoWork message
  */
-class DoWorkInfo(@BeanProperty val doWork: DoWork) {
+class DoWorkInfo(val doWork: DoWork) {
 
   /** Timestamp of the last send */
-  @BeanProperty var timestamp: Long = System.currentTimeMillis()
+  var timestamp = System.currentTimeMillis()
 
   /** number of sending operations */
-  var sendCount: Int = 1
+  var sendCount = 1
 
   /**
    * sets the internal timestamp value and increases the sendcount value

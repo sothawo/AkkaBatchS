@@ -1,14 +1,9 @@
 package com.sothawo.akkabatch.scala
 
-import java.text.MessageFormat
-import akka.actor.{Cancellable, ActorSelection}
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
+
+import akka.actor.{ActorSelection, Cancellable, Props}
 import com.sothawo.akkabatch.scala.messages._
-import com.sothawo.akkabatch.scala.messages.GetWork
-import com.sothawo.akkabatch.scala.messages.WorkAvailable
-import com.sothawo.akkabatch.scala.messages.Register
-import com.sothawo.akkabatch.scala.messages.DoWork
 
 /**
  * Actor to create a Record from a csv line
@@ -16,6 +11,9 @@ import com.sothawo.akkabatch.scala.messages.DoWork
  * @author P.J. Meisch (pj.meisch@sothawo.com).
  */
 class CSV2Record extends AkkaBatchActor {
+
+  /** implicit execution context for the scheduler */
+  implicit val ec = context.dispatcher
 
   private val REGISTER_RESEND = "registerResend"
 
@@ -37,12 +35,12 @@ class CSV2Record extends AkkaBatchActor {
   override def preStart() {
     super.preStart()
 
-    val readerPath: String = appConfig.getString("network.master.address") + appConfig.getString("names.readerRef")
+    val readerPath = appConfig.getString("network.master.address") + appConfig.getString("names.readerRef")
     reader = context.actorSelection(readerPath)
     recordModifier = context.actorSelection(appConfig.getString("names.recordModifierRef"))
 
     log.info("Reader path from configuration: " + readerPath)
-    log.info(MessageFormat.format("get data from {0}, send data to {1}", reader.pathString, recordModifier.pathString))
+    log.info(s"get data from ${reader.pathString}, send data to ${recordModifier.pathString}")
 
     // 0 seconds ist eigentlich 0.seconds und implizite Konvertierung aus scala.concurrent.duration._
     registerSchedule = context.system.scheduler
@@ -78,4 +76,8 @@ class CSV2Record extends AkkaBatchActor {
     // ask for more work
     sender ! getWork
   }
+}
+
+object CSV2Record {
+  def props() = Props(new CSV2Record())
 }

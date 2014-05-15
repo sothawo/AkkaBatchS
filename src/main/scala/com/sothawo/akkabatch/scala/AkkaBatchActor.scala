@@ -5,7 +5,7 @@ import akka.event.Logging
 import com.typesafe.config.Config
 
 /**
- * base class for the actors. provides logger and configuration.
+ * base class for the actors. provides a log field via the ActorLogging trait and configuration.
  *
  * @author P.J. Meisch (pj.meisch@sothawo.com).
  */
@@ -17,7 +17,7 @@ abstract class AkkaBatchActor extends Actor with ActorLogging {
   /** application configuration */
   protected var appConfig: Config = _
 
-  override def preStart(): Unit = {
+  override def preStart() {
     super.preStart()
     globalConfig = context.system.settings.config
     appConfig = globalConfig.getConfig("com.sothawo.akkabatch")

@@ -116,7 +116,7 @@ class Reader extends AkkaBatchActor {
     numRecordsProcessed = 0
     averageProcessingTimeMs = 0
 
-    var result: Boolean = true
+    var result = true
     try {
       reader = new BufferedReader(
         new InputStreamReader(new FileInputStream(msg.inputFilename), msg.encoding))
@@ -141,8 +141,8 @@ class Reader extends AkkaBatchActor {
 
   def sendWork() {
     if (0 < workToBeDone.size) {
-      val doWork: DoWork = workToBeDone.firstEntry.getValue
-      val recordId: Long = doWork.recordId
+      val doWork = workToBeDone.firstEntry.getValue
+      val recordId = doWork.recordId
       workToBeDone.remove(recordId)
       if (!doWorkInfos.containsKey(recordId)) {
         doWorkInfos.put(recordId, new DoWorkInfo(doWork))
@@ -153,14 +153,14 @@ class Reader extends AkkaBatchActor {
 
   def resendMessages() {
     // move data with timeout (twice the average processing time)
-    val now: Long = System.currentTimeMillis
-    val overdueTimestamp: Long = now - (2 * averageProcessingTimeMs)
+    val now = System.currentTimeMillis
+    val overdueTimestamp = now - (2 * averageProcessingTimeMs)
     import scala.collection.JavaConversions._
     for (entry <- doWorkInfos.entrySet) {
       val doWorkInfo: DoWorkInfo = entry.getValue
-      if (doWorkInfo.getTimestamp <= overdueTimestamp) {
+      if (doWorkInfo.timestamp <= overdueTimestamp) {
         doWorkInfo.markResend(now)
-        workToBeDone.put(entry.getKey, doWorkInfo.getDoWork)
+        workToBeDone.put(entry.getKey, doWorkInfo.doWork)
       }
     }
     notifyWorkers()
@@ -171,14 +171,13 @@ class Reader extends AkkaBatchActor {
   }
 
   def recordReceived(msg: RecordReceived) {
-    val recordId: Long = msg.recordId
-    val doWorkInfo: DoWorkInfo = doWorkInfos.get(recordId)
-
+    val recordId = msg.recordId
+    val doWorkInfo = doWorkInfos.get(recordId)
 
     if (null != doWorkInfo) {
       doWorkInfos.remove(recordId)
       workToBeDone.remove(recordId)
-      val duration: Long = System.currentTimeMillis - doWorkInfo.getTimestamp
+      val duration = System.currentTimeMillis - doWorkInfo.timestamp
       if (0 == averageProcessingTimeMs) {
         averageProcessingTimeMs = duration
       }
@@ -194,7 +193,7 @@ class Reader extends AkkaBatchActor {
   }
 
   def recordsWritten(msg: RecordsWritten) {
-    val numRecordsWritten: Long = msg.numRecords
+    val numRecordsWritten = msg.numRecords
     actNumRecordsInSystem -= numRecordsWritten
     fillWorkToBeDone()
     numRecordsInOutput += numRecordsWritten
@@ -207,7 +206,7 @@ class Reader extends AkkaBatchActor {
   def cleanupWorkers() {
     val cleanWorkers: util.Map[ActorRef, Long] = new util.HashMap[ActorRef, Long]
     // 5x registerInterval means timeout
-    val staleTimestamp: Long = System.currentTimeMillis - (5000 * appConfig.getInt("times.registerIntervall"))
+    val staleTimestamp = System.currentTimeMillis - (5000 * appConfig.getInt("times.registerIntervall"))
     import scala.collection.JavaConversions._
     for (entry <- workers.entrySet) {
       if (entry.getValue > staleTimestamp) {
@@ -224,9 +223,9 @@ class Reader extends AkkaBatchActor {
   def fillWorkToBeDone() {
     // only fill when there are less than the configured records in the system
     if (actNumRecordsInSystem < fillLevel) {
-      var breakout: Boolean = false
+      var breakout = false
       while (null != reader && actNumRecordsInSystem < maxNumRecordsInSystem && !breakout) {
-        val line: String = reader.readLine
+        val line = reader.readLine
         if (line != null) {
           val recordId: Long = recordSerialNo;
           recordSerialNo += 1

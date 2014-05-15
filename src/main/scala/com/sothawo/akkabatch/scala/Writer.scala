@@ -51,7 +51,7 @@ class Writer extends AkkaBatchActor {
    * @param msg init message
    */
   private def initWriter(msg: InitWriter) = {
-    var result: Boolean = true
+    var result = true
 
     try {
       writer = new PrintWriter(msg.outputFilename, msg.encoding)

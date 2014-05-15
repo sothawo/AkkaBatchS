@@ -110,7 +110,7 @@ object BatchApp extends App {
       InitWriter(outfileName, configApp.getString("charset.outfile")))
 
     log.info("waiting for Writer to be initialized...")
-    inbox.receive(5 seconds) match {
+    inbox receive (5 seconds) match {
       case msg: InitResult => if (!msg.success) throw new AkkaBatchException("Error initializing the Writer")
       case _ => throw new AkkaBatchException("unknown answer")
     }
@@ -122,8 +122,8 @@ object BatchApp extends App {
    * Intializes the Worker actors
    */
   def initWorkers() {
-    system.actorOf(FromConfig.props(Props[RecordModifier]), configApp.getString("names.recordModifier"))
-    system.actorOf(FromConfig.props(Props[CSV2Record]), configApp.getString("names.csv2Record"))
+    system.actorOf(FromConfig.props(RecordModifier.props()), configApp.getString("names.recordModifier"))
+    system.actorOf(FromConfig.props(CSV2Record.props()), configApp.getString("names.csv2Record"))
   }
 
   def waitForWorkDone {
