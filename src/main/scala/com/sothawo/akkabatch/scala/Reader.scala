@@ -1,6 +1,6 @@
 package com.sothawo.akkabatch.scala
 
-import akka.actor.{ActorRef, Cancellable}
+import akka.actor.{Props, ActorRef, Cancellable}
 import com.sothawo.akkabatch.scala.messages._
 import com.sothawo.akkabatch.scala.messages.DoWork
 import com.sothawo.akkabatch.scala.messages.InitReader
@@ -119,7 +119,7 @@ class Reader extends AkkaBatchActor {
     var result: Boolean = true
     try {
       reader = new BufferedReader(
-        new InputStreamReader(new FileInputStream(msg.getInputFilename), msg.getEncoding))
+        new InputStreamReader(new FileInputStream(msg.inputFilename), msg.encoding))
       fillWorkToBeDone()
     }
     catch {
@@ -129,7 +129,7 @@ class Reader extends AkkaBatchActor {
       }
     }
 
-    log.info(s"file: ${msg.getInputFilename }, encoding: ${msg.getEncoding }, Init-result: ${result }")
+    log.info(s"file: ${msg.inputFilename}, encoding: ${msg.encoding}, Init-result: ${result}")
 
     if (!result) {
       sender ! WorkDone(false)
@@ -142,7 +142,7 @@ class Reader extends AkkaBatchActor {
   def sendWork() {
     if (0 < workToBeDone.size) {
       val doWork: DoWork = workToBeDone.firstEntry.getValue
-      val recordId: Long = doWork.getRecordId
+      val recordId: Long = doWork.recordId
       workToBeDone.remove(recordId)
       if (!doWorkInfos.containsKey(recordId)) {
         doWorkInfos.put(recordId, new DoWorkInfo(doWork))
@@ -171,7 +171,7 @@ class Reader extends AkkaBatchActor {
   }
 
   def recordReceived(msg: RecordReceived) {
-    val recordId: Long = msg.getRecordId
+    val recordId: Long = msg.recordId
     val doWorkInfo: DoWorkInfo = doWorkInfos.get(recordId)
 
 
@@ -194,7 +194,7 @@ class Reader extends AkkaBatchActor {
   }
 
   def recordsWritten(msg: RecordsWritten) {
-    val numRecordsWritten: Long = msg.getNumRecords
+    val numRecordsWritten: Long = msg.numRecords
     actNumRecordsInSystem -= numRecordsWritten
     fillWorkToBeDone()
     numRecordsInOutput += numRecordsWritten
@@ -257,4 +257,8 @@ class Reader extends AkkaBatchActor {
       }
     }
   }
+}
+
+object Reader {
+  def props() = Props(new Reader())
 }

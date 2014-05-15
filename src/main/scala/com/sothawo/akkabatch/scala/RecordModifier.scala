@@ -50,7 +50,7 @@ class RecordModifier extends AkkaBatchActor {
   def receive = {
     case msg: ProcessRecord => {
       if (dropRatePerMille == 0 || Random.nextInt(1000) >= dropRatePerMille) {
-        writer ! ProcessRecord(msg.getRecordId, msg.getCsvOriginal, RecordProcessor.processRecord(msg.getRecord))
+        writer ! ProcessRecord(msg.recordId, msg.csvOriginal, RecordProcessor.processRecord(msg.record))
         numProcessed += 1
       } else {
         numDropped += 1

@@ -1,6 +1,6 @@
 package com.sothawo.akkabatch.scala
 
-import akka.actor.ActorSelection
+import akka.actor.{Props, ActorSelection}
 import java.io.PrintWriter
 import com.sothawo.akkabatch.scala.messages._
 import com.sothawo.akkabatch.scala.messages.InitResult
@@ -54,10 +54,10 @@ class Writer extends AkkaBatchActor {
     var result: Boolean = true
 
     try {
-      writer = new PrintWriter(msg.getOutputFilename, msg.getEncoding)
+      writer = new PrintWriter(msg.outputFilename, msg.encoding)
     }
     catch {
-      case e: Any => {
+      case e: Exception => {
         log.error(e, "Initializing Writer")
         result = false
       }
@@ -65,13 +65,13 @@ class Writer extends AkkaBatchActor {
 
     outputBuffer.clear()
     nextRecordId = 1
-    log.info(s"file: ${msg.getOutputFilename}, encoding: ${msg.getEncoding}, Init-result: ${result}")
+    log.info(s"file: ${msg.outputFilename}, encoding: ${msg.encoding}, Init-result: ${result}")
 
     sender ! InitResult(result)
   }
 
   private def processRecord(msg: ProcessRecord) = {
-    val recordId = msg.getRecordId
+    val recordId = msg.recordId
     // if the id has already been processed, ignore it, has been resend by the Reader too often.
     if (recordId >= nextRecordId) {
       reader ! RecordReceived(recordId)
@@ -79,7 +79,7 @@ class Writer extends AkkaBatchActor {
       var recordsWritten = 0L
       while (!outputBuffer.isEmpty && nextRecordId == outputBuffer.firstKey) {
         val record = outputBuffer.remove(nextRecordId)
-        writer.println(record.getCsvOriginal)
+        writer.println(record.csvOriginal)
         recordsWritten += 1
         nextRecordId += 1
         if (0 == (nextRecordId % 10000)) {
@@ -91,4 +91,8 @@ class Writer extends AkkaBatchActor {
       }
     }
   }
+}
+
+object Writer {
+  def props() = Props(new Writer())
 }

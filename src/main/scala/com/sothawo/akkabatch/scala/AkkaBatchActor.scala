@@ -1,6 +1,6 @@
 package com.sothawo.akkabatch.scala
 
-import akka.actor.Actor
+import akka.actor.{ActorLogging, Actor}
 import akka.event.Logging
 import com.typesafe.config.Config
 
@@ -9,10 +9,7 @@ import com.typesafe.config.Config
  *
  * @author P.J. Meisch (pj.meisch@sothawo.com).
  */
-abstract class AkkaBatchActor extends Actor {
-
-  /** Logger */
-  protected val log = Logging(context.system, this)
+abstract class AkkaBatchActor extends Actor with ActorLogging {
 
   /** global configuration object */
   protected var globalConfig: Config = _

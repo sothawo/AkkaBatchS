@@ -73,7 +73,7 @@ public class BatchAppSerial {
             ProcessRecord processRecord = new ProcessRecord(numRecords, line,
                     RecordProcessor.processRecord(Record.apply(line)));
 
-            writer.println(processRecord.getCsvOriginal());
+            writer.println(processRecord.csvOriginal());
             if (0 == (numRecords % 10000)) {
                 System.out.println(MessageFormat.format("processed: {0}: ", numRecords));
             }
