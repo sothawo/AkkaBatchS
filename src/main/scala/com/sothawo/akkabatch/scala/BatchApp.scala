@@ -1,12 +1,14 @@
 package com.sothawo.akkabatch.scala
 
-import com.typesafe.config.{ConfigResolveOptions, ConfigParseOptions, ConfigFactory, Config}
-import com.sothawo.akkabatch.scala.messages.{WorkDone, InitResult, InitWriter, InitReader}
 import java.io.File
-import akka.actor.{Props, ActorRef, ActorSystem, Inbox}
-import akka.event.{LoggingAdapter, Logging}
+
 import scala.concurrent.duration._
+
+import akka.actor.{ActorRef, ActorSystem, Inbox}
+import akka.event.{Logging, LoggingAdapter}
 import akka.routing.FromConfig
+import com.sothawo.akkabatch.scala.messages.{InitReader, InitResult, InitWriter, WorkDone}
+import com.typesafe.config.{Config, ConfigFactory, ConfigParseOptions, ConfigResolveOptions}
 
 /**
  * @author P.J. Meisch (pj.meisch@sothawo.com).
@@ -62,10 +64,10 @@ object BatchApp extends App {
     waitForWorkDone
   }
   catch {
-    case e: Exception => e.printStackTrace
+    case e: Exception => e.printStackTrace()
   }
   finally {
-    if (null != system) system.shutdown
+    if (null != system) system.shutdown()
   }
 
   /**

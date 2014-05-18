@@ -13,18 +13,18 @@ import com.sothawo.akkabatch.scala.messages._
 class CSV2Record extends AkkaBatchActor {
 
   /** implicit execution context for the scheduler */
-  implicit val ec = context.dispatcher
+  implicit val ec = context dispatcher
 
   private val REGISTER_RESEND = "registerResend"
 
   /** actor for the next processing step */
-  private var recordModifier: ActorSelection = null
+  private var recordModifier: ActorSelection = _
 
   /** the Reader, where work is pulled from */
-  private var reader: ActorSelection = null
+  private var reader: ActorSelection = _
 
   /** Scheduler object for the registration */
-  private var registerSchedule: Cancellable = null
+  private var registerSchedule: Cancellable = _
 
   /** Register message */
   private val register = Register()
@@ -39,8 +39,8 @@ class CSV2Record extends AkkaBatchActor {
     reader = context.actorSelection(readerPath)
     recordModifier = context.actorSelection(appConfig.getString("names.recordModifierRef"))
 
-    log.info("Reader path from configuration: " + readerPath)
-    log.info(s"get data from ${reader.pathString}, send data to ${recordModifier.pathString}")
+    log debug (s"Reader path from configuration: ${readerPath}")
+    log debug (s"get data from ${reader.pathString}, send data to ${recordModifier.pathString}")
 
     // 0 seconds ist eigentlich 0.seconds und implizite Konvertierung aus scala.concurrent.duration._
     registerSchedule = context.system.scheduler
@@ -48,10 +48,7 @@ class CSV2Record extends AkkaBatchActor {
   }
 
   override def postStop() {
-    if (null != registerSchedule) {
-      registerSchedule.cancel()
-      registerSchedule = null
-    }
+    registerSchedule.cancel()
     super.postStop()
   }
 
@@ -69,11 +66,7 @@ class CSV2Record extends AkkaBatchActor {
   private def doWork(msg: DoWork) = {
     // convert into a Record and send it off in a ProcessRecord message
     recordModifier ! ProcessRecord(msg.recordId, msg.csvOriginal, Record(msg.csvOriginal))
-
-    // use some time
     RecordProcessor.useTime
-
-    // ask for more work
     sender ! getWork
   }
 }

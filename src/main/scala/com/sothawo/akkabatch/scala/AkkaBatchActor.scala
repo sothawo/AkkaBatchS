@@ -20,6 +20,6 @@ abstract class AkkaBatchActor extends Actor with ActorLogging {
   override def preStart() {
     super.preStart()
     globalConfig = context.system.settings.config
-    appConfig = globalConfig.getConfig("com.sothawo.akkabatch")
+    appConfig = globalConfig getConfig("com.sothawo.akkabatch")
   }
 }

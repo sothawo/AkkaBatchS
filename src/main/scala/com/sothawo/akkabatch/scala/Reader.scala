@@ -1,15 +1,14 @@
 package com.sothawo.akkabatch.scala
 
-import akka.actor.{Props, ActorRef, Cancellable}
-import com.sothawo.akkabatch.scala.messages._
-import com.sothawo.akkabatch.scala.messages.DoWork
-import com.sothawo.akkabatch.scala.messages.InitReader
-import com.sothawo.akkabatch.scala.messages.Register
-import com.sothawo.akkabatch.scala.messages.WorkAvailable
-import java.io.{IOException, FileInputStream, InputStreamReader, BufferedReader}
 import java.util
-import scala.concurrent.duration._
+import java.io.IOException
 
+import scala.collection.Iterator
+import scala.concurrent.duration._
+import scala.io.Source
+
+import akka.actor.{ActorRef, Cancellable, Props}
+import com.sothawo.akkabatch.scala.messages._
 
 /**
  * Reader-actor.
@@ -26,10 +25,13 @@ class Reader extends AkkaBatchActor {
   private var inbox: ActorRef = _
 
   /** to read the input data */
-  private var reader: BufferedReader = _
+  /** need to store the source to be able to close it */
+  private var inputSource: Source = _
+  private var inputIterator: Iterator[String] = _
+  private var inputClosed = true
 
   /** mapping of registered workers to the timestamp of the registration */
-  private val workers: util.Map[ActorRef, Long] = new util.HashMap[ActorRef, Long]
+  private var workers = new scala.collection.mutable.HashMap[ActorRef, Long]
 
   /** actual work to be done; put in a map, so when the work is rescheduled because of a timeout, it's not duplicated */
   private val workToBeDone: util.TreeMap[Long, DoWork] = new util.TreeMap[Long, DoWork]
@@ -47,7 +49,7 @@ class Reader extends AkkaBatchActor {
   private var recordSerialNo: Long = _
 
   /** number of records read fromm the input file */
-  private var numRecordsInInput: Long = _
+  private var numRecordsFromInput: Long = _
 
   /** number of records written to the output file */
   private var numRecordsInOutput: Long = _
@@ -95,13 +97,9 @@ class Reader extends AkkaBatchActor {
   }
 
   def registerWorker() {
-    if (!workers.containsKey(sender)) {
-      log.info("registered  " + sender.path)
-    }
-    workers.put(sender, System.currentTimeMillis)
-    if (0 < workToBeDone.size) {
-      sender ! workAvailable
-    }
+    if (!(workers contains sender)) log debug (s"registered  ${sender path}")
+    workers(sender) = System.currentTimeMillis
+    if (0 < workToBeDone.size) sender ! workAvailable
   }
 
   def initReader(msg: InitReader) {
@@ -111,15 +109,16 @@ class Reader extends AkkaBatchActor {
     workToBeDone.clear()
     actNumRecordsInSystem = 0
     recordSerialNo = 1
-    numRecordsInInput = 0
+    numRecordsFromInput = 0
     numRecordsInOutput = 0
     numRecordsProcessed = 0
     averageProcessingTimeMs = 0
 
     var result = true
     try {
-      reader = new BufferedReader(
-        new InputStreamReader(new FileInputStream(msg.inputFilename), msg.encoding))
+      inputSource = Source.fromFile(msg inputFilename, msg encoding)
+      inputIterator = inputSource getLines()
+      inputClosed = false
       fillWorkToBeDone()
     }
     catch {
@@ -197,48 +196,34 @@ class Reader extends AkkaBatchActor {
     actNumRecordsInSystem -= numRecordsWritten
     fillWorkToBeDone()
     numRecordsInOutput += numRecordsWritten
-    if (null == reader && numRecordsInInput == numRecordsInOutput) {
+    if (inputClosed && numRecordsFromInput == numRecordsInOutput) {
       log.debug(s"average processing time: ${averageProcessingTimeMs} ms")
       inbox ! WorkDone(true)
     }
   }
 
   def cleanupWorkers() {
-    val cleanWorkers: util.Map[ActorRef, Long] = new util.HashMap[ActorRef, Long]
     // 5x registerInterval means timeout
     val staleTimestamp = System.currentTimeMillis - (5000 * appConfig.getInt("times.registerIntervall"))
-    import scala.collection.JavaConversions._
-    for (entry <- workers.entrySet) {
-      if (entry.getValue > staleTimestamp) {
-        cleanWorkers.put(entry.getKey, entry.getValue)
-      }
-      else {
-        log.debug("remove worker " + entry.getKey.path)
-      }
-    }
-    workers.clear()
-    workers.putAll(cleanWorkers)
+    //    workers = workers retain ((actor, timestamp) => if (timestamp > staleTimestamp) true else { log.debug
+    // ("remove " +
+    //      "worker " + actor.path); false})
+    workers = workers retain ((_, timestamp) => timestamp > staleTimestamp)
   }
 
   def fillWorkToBeDone() {
     // only fill when there are less than the configured records in the system
     if (actNumRecordsInSystem < fillLevel) {
-      var breakout = false
-      while (null != reader && actNumRecordsInSystem < maxNumRecordsInSystem && !breakout) {
-        val line = reader.readLine
-        if (line != null) {
-          val recordId: Long = recordSerialNo;
+      while (!inputClosed && actNumRecordsInSystem < maxNumRecordsInSystem) {
+        if (inputIterator hasNext) {
+          val recordId = recordSerialNo;
+          workToBeDone.put(recordId, DoWork(recordId, inputIterator.next()))
           recordSerialNo += 1
-          workToBeDone.put(recordId, DoWork(recordId, line))
           actNumRecordsInSystem += 1
-          numRecordsInInput += 1
-        }
-        else {
-          reader.close()
-          reader = null
-        }
-        if (500 == numRecordsInInput) {
-          breakout = true
+          numRecordsFromInput += 1
+        } else {
+          inputSource.close()
+          inputClosed = true
         }
       }
       notifyWorkers()
@@ -250,11 +235,11 @@ class Reader extends AkkaBatchActor {
    */
   private def notifyWorkers() {
     if (0 < workToBeDone.size()) {
-      import scala.collection.JavaConversions._
-      for (worker <- workers.keySet()) {
-        worker ! workAvailable;
+      for (worker <- workers.keySet) {
+        worker ! workAvailable
       }
     }
+
   }
 }
 
