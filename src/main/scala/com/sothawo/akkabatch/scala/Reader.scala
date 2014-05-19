@@ -3,7 +3,7 @@ package com.sothawo.akkabatch.scala
 import java.util
 import java.io.IOException
 
-import scala.collection.Iterator
+import scala.collection.{mutable, Iterator}
 import scala.concurrent.duration._
 import scala.io.Source
 
@@ -31,7 +31,7 @@ class Reader extends AkkaBatchActor {
   private var inputClosed = true
 
   /** mapping of registered workers to the timestamp of the registration */
-  private var workers = new scala.collection.mutable.HashMap[ActorRef, Long]
+  private var workers = new mutable.HashMap[ActorRef, Long]
 
   /** actual work to be done; put in a map, so when the work is rescheduled because of a timeout, it's not duplicated */
   private val workToBeDone: util.TreeMap[Long, DoWork] = new util.TreeMap[Long, DoWork]
@@ -61,7 +61,7 @@ class Reader extends AkkaBatchActor {
   private var averageProcessingTimeMs: Long = 0L
 
   /** map from recordIDs to DoWorkInfos */
-  private val doWorkInfos: util.Map[Long, DoWorkInfo] = new util.HashMap[Long, DoWorkInfo]
+  private val workInProcess = new mutable.HashMap[Long, DoWorkInfo]
 
   /** message for resend */
   private val resend: SendAgain = SendAgain()
@@ -143,9 +143,8 @@ class Reader extends AkkaBatchActor {
       val doWork = workToBeDone.firstEntry.getValue
       val recordId = doWork.recordId
       workToBeDone.remove(recordId)
-      if (!doWorkInfos.containsKey(recordId)) {
-        doWorkInfos.put(recordId, new DoWorkInfo(doWork))
-      }
+      // only insert when not contained otherwise the timestamp is modified
+      if (!workInProcess.contains(recordId)) workInProcess(recordId) = DoWorkInfo(doWork)
       sender ! doWork
     }
   }
@@ -154,14 +153,23 @@ class Reader extends AkkaBatchActor {
     // move data with timeout (twice the average processing time)
     val now = System.currentTimeMillis
     val overdueTimestamp = now - (2 * averageProcessingTimeMs)
-    import scala.collection.JavaConversions._
-    for (entry <- doWorkInfos.entrySet) {
-      val doWorkInfo: DoWorkInfo = entry.getValue
+
+    for ((recordId, doWorkInfo) <- workInProcess) {
       if (doWorkInfo.timestamp <= overdueTimestamp) {
         doWorkInfo.markResend(now)
-        workToBeDone.put(entry.getKey, doWorkInfo.doWork)
+        workToBeDone.put(recordId, doWorkInfo.doWork)
       }
     }
+
+    // funktional:
+    //    workInProcess foreach {
+    //      case (recordId, doWorkInfo) => {
+    //        if (doWorkInfo.timestamp <= overdueTimestamp) {
+    //          doWorkInfo.markResend(now)
+    //          workToBeDone.put(recordId, doWorkInfo.doWork)
+    //        }
+    //      }
+    //    }
     notifyWorkers()
 
     // check for resend in thrice the average processing time
@@ -171,21 +179,17 @@ class Reader extends AkkaBatchActor {
 
   def recordReceived(msg: RecordReceived) {
     val recordId = msg.recordId
-    val doWorkInfo = doWorkInfos.get(recordId)
-
-    if (null != doWorkInfo) {
-      doWorkInfos.remove(recordId)
+    if (workInProcess.contains(recordId)) {
+      val doWorkInfo = workInProcess(recordId)
+      workInProcess -= recordId
       workToBeDone.remove(recordId)
       val duration = System.currentTimeMillis - doWorkInfo.timestamp
       if (0 == averageProcessingTimeMs) {
-        averageProcessingTimeMs = duration
+        averageProcessingTimeMs = duration abs
       }
       else if (duration != averageProcessingTimeMs) {
-        averageProcessingTimeMs = ((averageProcessingTimeMs * numRecordsProcessed) + duration) / (numRecordsProcessed
-          + 1)
-      }
-      if (1 > averageProcessingTimeMs) {
-        averageProcessingTimeMs = 1
+        averageProcessingTimeMs = (((averageProcessingTimeMs * numRecordsProcessed) + duration) / (numRecordsProcessed
+          + 1)) max 1
       }
       numRecordsProcessed += 1
     }
@@ -197,7 +201,7 @@ class Reader extends AkkaBatchActor {
     fillWorkToBeDone()
     numRecordsInOutput += numRecordsWritten
     if (inputClosed && numRecordsFromInput == numRecordsInOutput) {
-      log.debug(s"average processing time: ${averageProcessingTimeMs} ms")
+      log info(s"average processing time: ${averageProcessingTimeMs} ms")
       inbox ! WorkDone(true)
     }
   }

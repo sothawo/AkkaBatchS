@@ -11,7 +11,7 @@ import scala.beans.BeanProperty
 class DoWorkInfo(val doWork: DoWork) {
 
   /** Timestamp of the last send */
-  var timestamp = System.currentTimeMillis()
+  var timestamp = System.currentTimeMillis
 
   /** number of sending operations */
   var sendCount = 1
@@ -25,4 +25,8 @@ class DoWorkInfo(val doWork: DoWork) {
     this.timestamp = timestamp
     sendCount += 1
   }
+}
+
+object DoWorkInfo {
+  def apply(doWork: DoWork) = new DoWorkInfo(doWork)
 }
