@@ -20,24 +20,25 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.7</maven.compiler.source>
         <maven.compiler.target>1.7</maven.compiler.target>
-        <scala.version>2.10.3</scala.version>
+
+        <version.scala>2.11.1</version.scala>
+        <version.akka>2.3.3</version.akka>
+        <version.akka_scala>2.11</version.akka_scala>
+        <version.typesafe.config>1.2.1</version.typesafe.config>
+        <version.commons.lang>3.3</version.commons.lang>
 
         <appassembler.dir>AkkaBatch</appassembler.dir>
-
-        <version.akka>2.3.1</version.akka>
-        <version.typesafe.config>1.2.0</version.typesafe.config>
-        <version.commons.lang>3.3</version.commons.lang>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-actor_2.10</artifactId>
+            <artifactId>akka-actor_${version.akka_scala}</artifactId>
             <version>${version.akka}</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-remote_2.10</artifactId>
+            <artifactId>akka-remote_${version.akka_scala}</artifactId>
             <version>${version.akka}</version>
         </dependency>
         <dependency>
@@ -48,7 +49,7 @@
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
-            <version>${scala.version}</version>
+            <version>${version.scala}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>

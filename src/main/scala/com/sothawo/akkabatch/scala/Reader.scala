@@ -238,12 +238,7 @@ class Reader extends AkkaBatchActor {
    * notifies the workers if there is work to be done
    */
   private def notifyWorkers() {
-    if (0 < workToBeDone.size()) {
-      for (worker <- workers.keySet) {
-        worker ! workAvailable
-      }
-    }
-
+    if (workToBeDone.size > 0) workers.foreach(_._1 ! workAvailable)
   }
 }
 
