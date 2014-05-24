@@ -1,6 +1,5 @@
 package com.sothawo.akkabatch.scala
 
-import java.util
 import java.io.IOException
 
 import scala.collection.{mutable, Iterator}
@@ -33,8 +32,9 @@ class Reader extends AkkaBatchActor {
   /** mapping of registered workers to the timestamp of the registration */
   private var workers = new mutable.HashMap[ActorRef, Long]
 
-  /** actual work to be done; put in a map, so when the work is rescheduled because of a timeout, it's not duplicated */
-  private val workToBeDone: util.TreeMap[Long, DoWork] = new util.TreeMap[Long, DoWork]
+  /** actual work to be done; put in a set, so when the work is rescheduled because of a timeout,
+    * it's not duplicated. */
+  private val workToBeDone = mutable.SortedSet[DoWork]()(DoWorkRecordIdOrdering)
 
   /** maximum number of records allowed in the system */
   private var maxNumRecordsInSystem: Long = _
@@ -99,7 +99,7 @@ class Reader extends AkkaBatchActor {
   def registerWorker() {
     if (!(workers contains sender)) log debug (s"registered  ${sender path}")
     workers(sender) = System.currentTimeMillis
-    if (0 < workToBeDone.size) sender ! workAvailable
+    if (workToBeDone.size > 0) sender ! workAvailable
   }
 
   def initReader(msg: InitReader) {
@@ -139,10 +139,10 @@ class Reader extends AkkaBatchActor {
   }
 
   def sendWork() {
-    if (0 < workToBeDone.size) {
-      val doWork = workToBeDone.firstEntry.getValue
+    if (workToBeDone.size > 0) {
+      val doWork = workToBeDone head
       val recordId = doWork.recordId
-      workToBeDone.remove(recordId)
+      workToBeDone -= doWork
       // only insert when not contained otherwise the timestamp is modified
       if (!workInProcess.contains(recordId)) workInProcess(recordId) = DoWorkInfo(doWork)
       sender ! doWork
@@ -157,7 +157,7 @@ class Reader extends AkkaBatchActor {
     for ((recordId, doWorkInfo) <- workInProcess) {
       if (doWorkInfo.timestamp <= overdueTimestamp) {
         doWorkInfo.markResend(now)
-        workToBeDone.put(recordId, doWorkInfo.doWork)
+        workToBeDone += doWorkInfo.doWork
       }
     }
 
@@ -182,7 +182,7 @@ class Reader extends AkkaBatchActor {
     if (workInProcess.contains(recordId)) {
       val doWorkInfo = workInProcess(recordId)
       workInProcess -= recordId
-      workToBeDone.remove(recordId)
+      workToBeDone -= doWorkInfo.doWork
       val duration = System.currentTimeMillis - doWorkInfo.timestamp
       if (0 == averageProcessingTimeMs) {
         averageProcessingTimeMs = duration abs
@@ -201,7 +201,7 @@ class Reader extends AkkaBatchActor {
     fillWorkToBeDone()
     numRecordsInOutput += numRecordsWritten
     if (inputClosed && numRecordsFromInput == numRecordsInOutput) {
-      log info(s"average processing time: ${averageProcessingTimeMs} ms")
+      log info (s"average processing time: ${averageProcessingTimeMs} ms")
       inbox ! WorkDone(true)
     }
   }
@@ -221,7 +221,7 @@ class Reader extends AkkaBatchActor {
       while (!inputClosed && actNumRecordsInSystem < maxNumRecordsInSystem) {
         if (inputIterator hasNext) {
           val recordId = recordSerialNo;
-          workToBeDone.put(recordId, DoWork(recordId, inputIterator.next()))
+          workToBeDone += DoWork(recordId, inputIterator.next())
           recordSerialNo += 1
           actNumRecordsInSystem += 1
           numRecordsFromInput += 1

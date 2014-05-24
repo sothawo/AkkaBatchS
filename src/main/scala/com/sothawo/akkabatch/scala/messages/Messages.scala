@@ -21,6 +21,9 @@ case class WorkAvailable()
 case class GetWork()
 
 case class DoWork(recordId: Long, csvOriginal: String)
+object DoWorkRecordIdOrdering extends Ordering[DoWork]{
+  def compare(a: DoWork, b: DoWork) = a.recordId compare b.recordId
+}
 
 case class ProcessRecord(recordId: Long, csvOriginal: String, record: Record)
 
