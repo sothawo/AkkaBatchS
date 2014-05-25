@@ -1,12 +1,12 @@
 package com.sothawo.akkabatch.scala
 
-import akka.actor.{Props, ActorSelection}
 import java.io.PrintWriter
+
+
+import akka.actor.{ActorSelection, Props}
 import com.sothawo.akkabatch.scala.messages._
-import com.sothawo.akkabatch.scala.messages.InitResult
-import com.sothawo.akkabatch.scala.messages.RecordReceived
-import com.sothawo.akkabatch.scala.messages.InitWriter
-import com.sothawo.akkabatch.scala.messages.ProcessRecord
+import scala.collection.mutable
+import scala.collection.immutable.TreeMap
 
 /**
  * Writer Actor.
@@ -20,8 +20,8 @@ class Writer extends AkkaBatchActor {
   /** Reader-actor */
   private var reader: ActorSelection = null
 
-  /** Buffer as Java TreeMap, because we need sorted access to the data, scala has no mutable TreeMap */
-  private val outputBuffer: java.util.TreeMap[Long, ProcessRecord] = new java.util.TreeMap[Long, ProcessRecord]
+  /** mapping from record id to actual data as a tree map to have the recordIds ordering */
+  private var outputData = TreeMap[Long, ProcessRecord]()
 
   /** recordId of the next record in the output file */
   private var nextRecordId: Long = 0L
@@ -63,7 +63,7 @@ class Writer extends AkkaBatchActor {
       }
     }
 
-    outputBuffer.clear()
+    outputData = TreeMap[Long, ProcessRecord]()
     nextRecordId = 1
     log.info(s"file: ${msg.outputFilename}, encoding: ${msg.encoding}, Init-result: ${result}")
 
@@ -75,17 +75,16 @@ class Writer extends AkkaBatchActor {
     // if the id has already been processed, ignore it, has been resend by the Reader too often.
     if (recordId >= nextRecordId) {
       reader ! RecordReceived(recordId)
-      outputBuffer.put(recordId, msg)
+      outputData += (recordId -> msg)
       var recordsWritten = 0L
-      while (!outputBuffer.isEmpty && nextRecordId == outputBuffer.firstKey) {
-        val record = outputBuffer.remove(nextRecordId)
+      while (!outputData.isEmpty && nextRecordId == outputData.firstKey) {
+        val record = outputData(nextRecordId) // existst as ist is firstkey
+        outputData -= nextRecordId
         writer.println(record.csvOriginal)
         recordsWritten += 1
         nextRecordId += 1
-        if (0 == (nextRecordId % 10000)) {
-          log.debug(s"processed: ${nextRecordId}")
-        }
-      }
+        if (0 == (nextRecordId % 10000)) log.debug(s"processed: ${nextRecordId}")
+    }
       if (recordsWritten > 0) {
         reader ! RecordsWritten(recordsWritten)
       }
